@@ -9,6 +9,17 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
+### Try it on your phone (no hosting)
+
+1. Laptop and phone on the **same Wi-Fi**.
+2. On the laptop: `npm run phone` — builds, starts the server and prints a link like `http://192.168.1.23:3000`.
+3. Open that link on your phone. For a full-screen app: **Share → Add to Home Screen** (iPhone) or **⋮ → Add to Home screen** (Android).
+
+If the phone can’t connect, allow Node through the laptop firewall (macOS asks the first time; on Windows choose “Private networks”).
+Away from your Wi-Fi? Run `npm run phone`, then in a second terminal `npx cloudflared tunnel --url http://localhost:3000` and open the `trycloudflare.com` link it prints (temporary, no account needed).
+
+`node scripts/e2e.mjs http://localhost:3000` walks every flow on an emulated phone (needs a Chromium path in `CHROME`).
+
 **Fonts:** Helvetica Now Display is licensed and not committed. Put `HelveticaNowDisplay-Regular.ttf` and
 `HelveticaNowDisplay-Medium.ttf` in `public/fonts/` (git-ignored). Without them the UI falls back to Inter / system sans.
 
