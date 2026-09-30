@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+/* Helvetica Now Display is licensed and not committed. Drop the files into public/fonts/ (git-ignored). */
+@font-face {
+  font-family: "Helvetica Now Display";
+  src: url("/fonts/HelveticaNowDisplay-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Now Display";
+  src: url("/fonts/HelveticaNowDisplay-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Evo Color tokens — exported 1:1 from the Figma variables. */
+@theme {
+  --color-paper: #f6f8f2; /* v3/bg */
+  --color-lime: #88d95f;
+  --color-lime-deep: #3f8f22;
+  --color-lime-soft: #e4f7d6;
+  --color-lime-wash: #f3fbec;
+  --color-forest: #242e21;
+  --color-ink: #151a13;
+
+  --color-t1: #0f1a16; /* text/primary */
+  --color-t2: #3a4440; /* text/secondary */
+  --color-t3: #6b7571; /* text/tertiary */
+  --color-t-disabled: #9aa39f;
+  --color-t-danger: #b42318;
+  --color-t-brand: #017a57;
+
+  --color-surface: #ffffff;
+  --color-subtle: #f4f6f5;
+  --color-muted: #ecefed;
+  --color-brand-subtle: #f2faf5;
+  --color-danger-subtle: #fdecec;
+
+  --color-line: #ecefed; /* border/default */
+  --color-line-strong: #dfe3e1;
+  --color-line-brand: #c8e8d9;
+
+  --color-mint-subtle: #eefbf4;
+  --color-mint-soft: #d9f5e6;
+  --color-mint-text: #0f7a4b;
+  --color-lavender-subtle: #f5f2ff;
+  --color-lavender-soft: #e9e3ff;
+  --color-lavender-text: #5b3fc4;
+  --color-peach-subtle: #fff4ee;
+  --color-peach-soft: #ffe4d6;
+  --color-peach-solid: #f08a5d;
+  --color-peach-text: #b4532a;
+  --color-sky-subtle: #eef6ff;
+  --color-sky-soft: #dcebff;
+  --color-sky-text: #245db8;
+  --color-sun-subtle: #fff9eb;
+  --color-sun-soft: #ffefc7;
+  --color-sun-text: #9a6a0b;
+  --color-blush-subtle: #fff1f4;
+  --color-blush-text: #b42850;
+
+  --font-sans: "Helvetica Now Display", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-evo: cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root {
+  --gradient-forest: linear-gradient(161deg, #33412e 0%, #151a13 71.43%);
+  --gradient-lime: linear-gradient(161deg, #a3e27d 0%, #62bf3b 71.43%);
+  --shadow-glass: 0 10px 13px rgba(26, 64, 20, 0.07);
+  color-scheme: light;
+}
+
+/* Evo type styles */
+@utility type-caption {
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.011px;
+  font-weight: 400;
+}
+@utility type-label-s {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.012px;
+  font-weight: 500;
+}
+@utility type-label-m {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+}
+@utility type-body-s {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+@utility type-body-m {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+@utility type-body-l {
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.016px;
+  font-weight: 400;
+}
+@utility type-title-m {
+  font-size: 17px;
+  line-height: 22px;
+  letter-spacing: -0.034px;
+  font-weight: 500;
+}
+@utility type-screen-title {
+  font-size: 30px;
+  line-height: 1.06;
+  letter-spacing: -0.9px;
+  font-weight: 500;
+}
+
+/* Glass surface used by cards, back buttons and inputs */
+@utility glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #fff;
+  filter: drop-shadow(0 10px 13px rgba(26, 64, 20, 0.07));
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html,
+body {
+  background: #e9ede4;
+  color: var(--color-t1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lime-deep);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@keyframes evo-shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
