@@ -8,6 +8,7 @@ export const insight: Insight = {
   happening: "Three days of scrolling instead of starting. The exams feel like one huge block.",
   why: "Big, vague tasks feel threatening. Avoiding them gives quick relief — then more guilt.",
   need: "A first step so small it feels easy. Not more pressure.",
+  short: { happening: "Scrolling instead of starting", why: "Big, vague tasks feel threatening", need: "A first step that feels easy" },
   tags: ["avoidance", "exam stress", "overwhelm"],
   basedOn: "Based on 3 check-ins  ·  just now",
 };
@@ -17,6 +18,7 @@ export const insightTired: Insight = {
   happening: "Evenings after dinner are when starting feels hardest.",
   why: "Low energy makes every task look bigger than it is.",
   need: "A shorter step earlier in the evening, before you’re drained.",
+  short: { happening: "Evenings feel hardest to start", why: "Low energy makes tasks look bigger", need: "A shorter, earlier step" },
   tags: ["tiredness", "exam stress"],
   basedOn: "Based on today  ·  low confidence",
 };

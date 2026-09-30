@@ -30,6 +30,25 @@ export function ChatHeader({ subtitle = "Here with you", status = true, still }:
   );
 }
 
+/** Tablet/desktop header: identity left, voice · crisis · more on the right. */
+export function WideChatHeader({ title = "Exam stress", subtitle = "Evo is here with you" }: { title?: string; subtitle?: string }) {
+  return (
+    <div className="flex h-[72px] items-center gap-3">
+      <Orb size={40} state="breathing" />
+      <div className="flex flex-1 flex-col">
+        <span className="type-title-m text-ink">{title}</span>
+        <span className="flex items-center gap-[5px] type-caption text-t3">
+          <span className="size-1.5 rounded-full bg-lime" />
+          {subtitle}
+        </span>
+      </div>
+      <IconButton icon="mic" label="Voice" href="/voice" className="size-10" />
+      <IconButton icon="lifebuoy" label="Crisis support" href="/crisis" className="size-10" />
+      <IconButton icon="more" label="More" className="size-10" />
+    </div>
+  );
+}
+
 /* ---------- Bubbles and Evo text ---------- */
 
 export function UserBubble({ children, still }: { children: ReactNode; still?: boolean }) {

@@ -44,7 +44,7 @@ export default function MemoryScreen() {
   };
 
   return (
-    <Screen glows={glows.onboarding}>
+    <Screen glows={glows.onboarding} app>
       <div className="flex flex-col gap-3 px-6 pt-[50px] pb-8">
         <BackButton href="/settings" />
         <h1 className="text-[30px] leading-[1.08] font-medium tracking-[-0.9px] text-ink">What Evo remembers</h1>

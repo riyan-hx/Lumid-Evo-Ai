@@ -5,18 +5,26 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { haptic, spring } from "@/lib/motion";
-import { Backdrop, type Glow, type RaysSpec } from "./backdrop";
+import { NavRail, Sidebar } from "./app-nav";
+import { Backdrop, wideGlows, type Glow, type RaysSpec } from "./backdrop";
 import { Icon, type IconName } from "./icons";
 
 type ScreenProps = {
   children: ReactNode;
   glows?: Glow[];
+  /** md+ glows in the 1440 design space (see `wideGlows`). */
+  wide?: Glow[];
   rays?: RaysSpec;
   dark?: boolean;
   /** Custom background (e.g. Calm space forest gradient). */
   background?: string;
   grain?: number;
+  /** Bottom nav on phones; implies the app shell. */
   nav?: boolean;
+  /** Tablet rail / desktop sidebar around the page. */
+  app?: boolean;
+  /** Content manages its own md+ width (Home, chat workspace) instead of the centred column. */
+  full?: boolean;
   className?: string;
   /** Painted under the glows, in the 393-wide design space (e.g. the Step booked burst). */
   under?: ReactNode;
@@ -25,33 +33,33 @@ type ScreenProps = {
 };
 
 /**
- * Mobile screen shell. Full-bleed on phones; on larger viewports it is shown as the
- * 393 × 852 Figma frame (rounded 44, soft shadow) with its own scroll.
+ * Screen shell. Full-bleed on every viewport. Phones get the 393 design; tablet and desktop get the
+ * nav rail / sidebar (app screens) and a centred column, or a full-width layout when `full`.
  */
-export function Screen({ children, glows = [], rays, dark, background, grain = 0.05, nav, className, under, still }: ScreenProps) {
+export function Screen({ children, glows = [], wide, rays, dark, background, grain = 0.05, nav, app, full, className, under, still }: ScreenProps) {
+  const shell = nav || app;
   return (
-    <div className="min-h-dvh md:flex md:items-center md:justify-center md:py-10">
-      <div
-        className={cn(
-          "no-scrollbar relative isolate flex min-h-dvh w-full flex-col overflow-x-clip",
-          "md:h-[min(852px,calc(100dvh-40px))] md:min-h-0 md:w-[393px] md:overflow-y-auto md:rounded-[44px] md:shadow-[0_30px_60px_-20px_rgba(26,46,20,0.12)]",
-          !background && "bg-paper",
-          dark && "text-white",
-        )}
-        style={background ? { background } : undefined}
-      >
-        <div className="relative flex min-h-full flex-1 flex-col">
-          <Backdrop under={under} items={glows} rays={rays} grain={grain} grainColor={dark ? "255 255 255" : "0 0 0"} />
-          <motion.main
-            className={cn("relative flex flex-1 flex-col", className)}
-            initial={still ? { opacity: 0 } : { opacity: 0, x: 24 }}
-            animate={still ? { opacity: 1 } : { opacity: 1, x: 0 }}
-            transition={still ? { duration: 0.24 } : spring.default}
-          >
-            {children}
-          </motion.main>
-          {nav && <BottomNav />}
-        </div>
+    <div
+      className={cn("no-scrollbar relative isolate flex min-h-dvh w-full flex-col overflow-x-clip", !background && "bg-paper", dark && "text-white")}
+      style={background ? { background } : undefined}
+    >
+      <Backdrop under={under} items={glows} wide={wide ?? (shell ? wideGlows.home : undefined)} rays={rays} grain={grain} grainColor={dark ? "255 255 255" : "0 0 0"} />
+      {shell && (
+        <>
+          <NavRail />
+          <Sidebar />
+        </>
+      )}
+      <div className={cn("relative flex flex-1 flex-col", shell && "md:pl-[92px] xl:pl-[264px]")}>
+        <motion.main
+          className={cn("relative mx-auto flex w-full flex-1 flex-col", !full && (shell ? "md:max-w-[600px]" : "md:max-w-[460px]"), className)}
+          initial={still ? { opacity: 0 } : { opacity: 0, x: 24 }}
+          animate={still ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          transition={still ? { duration: 0.24 } : spring.default}
+        >
+          {children}
+        </motion.main>
+        {nav && <BottomNav />}
       </div>
     </div>
   );
@@ -72,7 +80,7 @@ export function BottomNav() {
   const active = tabs.find((t) => t.match.some((m) => path.startsWith(m)))?.key ?? "home";
 
   return (
-    <div className="pointer-events-none sticky bottom-0 z-30 mt-auto flex justify-center pb-[max(env(safe-area-inset-bottom),14px)]">
+    <div className="pointer-events-none sticky bottom-0 z-30 mt-auto flex justify-center md:hidden pb-[max(env(safe-area-inset-bottom),14px)]">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[140px] bg-gradient-to-b from-paper/0 via-paper/95 via-50% to-paper" />
       <nav
         className="pointer-events-auto relative flex items-center gap-1.5 rounded-full border-[1.2px] border-dashed border-line-strong bg-white/82 p-1.5 backdrop-blur-[12px] drop-shadow-[0_12px_16px_rgba(15,36,26,0.12)]"

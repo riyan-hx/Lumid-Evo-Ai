@@ -1,6 +1,6 @@
 # Lumid Evo — web app
 
-Mobile-first Next.js build of the **Evo V3 FINAL UI** Figma file (Phase 0 + P0 screens), with the motion spec from the design handoff.
+Responsive Next.js build of the **Evo V3 FINAL UI** Figma file (Phase 0 + P0 screens), with the motion spec from the design handoff.
 
 ## Run
 
@@ -18,7 +18,7 @@ npm run dev        # http://localhost:3000
 If the phone can’t connect, allow Node through the laptop firewall (macOS asks the first time; on Windows choose “Private networks”).
 Away from your Wi-Fi? Run `npm run phone`, then in a second terminal `npx cloudflared tunnel --url http://localhost:3000` and open the `trycloudflare.com` link it prints (temporary, no account needed).
 
-`node scripts/e2e.mjs http://localhost:3000` walks every flow on an emulated phone (needs a Chromium path in `CHROME`).
+`node scripts/e2e.mjs http://localhost:3000` walks every flow on an emulated phone, then the desktop workspace (needs a Chromium path in `CHROME`).
 
 **Fonts:** Helvetica Now Display is licensed and not committed. Put `HelveticaNowDisplay-Regular.ttf` and
 `HelveticaNowDisplay-Medium.ttf` in `public/fonts/` (git-ignored). Without them the UI falls back to Inter / system sans.
@@ -53,6 +53,12 @@ Next.js (App Router) · TypeScript · Tailwind CSS v4 · Motion (Framer Motion).
 | `/chats` · `/settings` · `/settings/memory` | 21 · 22 (+ 29 delete sheet) · 26 |
 | `/crisis` · `/safety` · `/offline` | 23 · 30 · 31 |
 
-Phones get full-bleed screens; wider viewports show the 393 × 852 frame. Dedicated tablet/desktop layouts are Phase 2.
+### Responsive layouts (Figma “Desktop & tablet”)
 
-`scripts/shot.mjs` takes Playwright screenshots of a route for visual checks against Figma.
+- **< 768 px** — phone design (393), floating bottom nav.
+- **768–1279 px** — 76 px nav rail. Chats: list panel (330) + conversation. Home: chat-first grid.
+- **≥ 1280 px** — 248 px sidebar. Chat: thread (max 620) + “Your plan” panel (388); insight card goes two-column. Home: composer, continue card, previous chats, this week / forecast / note, shortcuts.
+- Onboarding, check-in, focus, calm and safety screens stay a centred column; sheets become centred modals.
+- **⌘K / Ctrl+K** opens a quick check-in; Enter sends; Esc closes sheets.
+
+`scripts/shot.mjs` screenshots a route; `scripts/grid.mjs` screenshots several routes side by side (e.g. at 1194 × 834 or 1440 × 900).

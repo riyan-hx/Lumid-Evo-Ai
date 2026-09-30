@@ -44,7 +44,7 @@ export default function Wins() {
   const max = Math.max(...s.bars);
 
   return (
-    <Screen glows={glows.wins}>
+    <Screen glows={glows.wins} app>
       <div className="flex flex-col gap-5 px-6 pt-[58px] pb-[30px]">
         <div className="flex items-center justify-between">
           <BackButton href="/home" />

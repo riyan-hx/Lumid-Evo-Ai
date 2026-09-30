@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 /** A blurred glow ellipse, exactly as in Figma (x/y/w/h in screen px, Figma blur radius). */
 export type Glow = { x: number; y: number; w: number; h: number; color: string; opacity: number; blur: number };
@@ -60,12 +61,27 @@ export const glows = {
   ],
 } satisfies Record<string, Glow[]>;
 
+/** Tablet/desktop glows from the 1440-wide Figma frames; x is mapped to a % of the viewport. */
+export const wideGlows = {
+  home: [
+    { x: 200, y: -250, w: 700, h: 500, color: "#a3e27d", opacity: 0.5, blur: 160 },
+    { x: 1000, y: -150, w: 500, h: 400, color: "#ffe7b3", opacity: 0.45, blur: 150 },
+    { x: 600, y: 650, w: 600, h: 500, color: "#e9e3ff", opacity: 0.5, blur: 160 },
+  ],
+  chat: [
+    { x: 300, y: -250, w: 700, h: 500, color: "#a3e27d", opacity: 0.5, blur: 160 },
+    { x: 1000, y: -150, w: 500, h: 400, color: "#7fe3b8", opacity: 0.35, blur: 150 },
+    { x: 500, y: 650, w: 600, h: 500, color: "#d4f77a", opacity: 0.25, blur: 160 },
+  ],
+} satisfies Record<string, Glow[]>;
+
 /**
  * Screen background: glows + optional rays + 5% grain.
  * Positions are in the 393-wide design space; the layer is centred so wider viewports keep the composition.
  */
 export function Backdrop({
   items,
+  wide,
   rays,
   grain = 0.05,
   grainColor = "0 0 0",
@@ -73,33 +89,49 @@ export function Backdrop({
 }: {
   under?: ReactNode;
   items: Glow[];
+  /** Glows for md+ in the 1440 design space. Without them the phone glows scale up around the centre. */
+  wide?: Glow[];
   rays?: RaysSpec;
   grain?: number;
   grainColor?: string;
 }) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className={cn("absolute top-0 left-1/2 h-full w-[393px] origin-top -translate-x-1/2", wide ? "md:hidden" : "md:scale-[1.9] xl:scale-[2.6]")}>
+        {items.map((g, i) => (
+          <GlowBlob key={i} g={g} />
+        ))}
+      </div>
+      {wide && (
+        <div className="absolute inset-0 hidden md:block">
+          {wide.map((g, i) => (
+            <GlowBlob key={i} g={g} left={`${(g.x / 1440) * 100}%`} />
+          ))}
+        </div>
+      )}
       <div className="absolute top-0 left-1/2 h-full w-[393px] -translate-x-1/2">
         {under}
-        {items.map((g, i) => (
-          <div
-            key={i}
-            className="absolute rounded-[50%]"
-            style={{
-              left: g.x,
-              top: g.y,
-              width: g.w,
-              height: g.h,
-              background: g.color,
-              opacity: g.opacity,
-              filter: `blur(${g.blur / 2}px)`,
-            }}
-          />
-        ))}
         {rays && <Rays {...rays} />}
       </div>
       {grain > 0 && <Grain opacity={grain} color={grainColor} />}
     </div>
+  );
+}
+
+function GlowBlob({ g, left }: { g: Glow; left?: string }) {
+  return (
+    <div
+      className="absolute rounded-[50%]"
+      style={{
+        left: left ?? g.x,
+        top: g.y,
+        width: g.w,
+        height: g.h,
+        background: g.color,
+        opacity: g.opacity,
+        filter: `blur(${g.blur / 2}px)`,
+      }}
+    />
   );
 }
 

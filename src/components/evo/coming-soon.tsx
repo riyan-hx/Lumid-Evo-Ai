@@ -10,7 +10,7 @@ import { Screen } from "@/components/ui/screen";
 /** Placeholder for P1/P2 screens so every nav target resolves. */
 export function ComingSoon({ title, body, plus, nav, cta }: { title: string; body: string; plus?: boolean; nav?: boolean; cta?: string }) {
   return (
-    <Screen glows={glows.checkIn} nav={nav}>
+    <Screen glows={glows.checkIn} nav={nav} app>
       <div className="flex flex-1 flex-col px-6 pt-[54px]">
         {!nav && <BackButton />}
         <div className="flex flex-1 flex-col items-center justify-center gap-4 pb-10 text-center">

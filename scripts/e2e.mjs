@@ -69,8 +69,8 @@ await page.getByRole("dialog").waitFor({ state: "detached" }); ok("Ask Evo sheet
 await tap("Tell me more"); await expectPath("/insight"); ok("Brief ‘Tell me more’ → Insight");
 await tap("Yes, that’s me"); ok("Insight confirm on 04");
 await page.goto(BASE + "/home", { waitUntil: "networkidle" });
-await page.getByLabel("Message Evo").fill("exam next week, can’t start");
-await page.getByRole("button", { name: "Send" }).tap();
+await page.getByLabel("Message Evo").first().fill("exam next week, can’t start");
+await page.getByRole("button", { name: "Send" }).first().tap();
 await expectPath("/chat?checkedIn=1&q="); await page.getByText("exam next week, can’t start").waitFor(); ok("Home composer → chat with message");
 await page.goto(BASE + "/home", { waitUntil: "networkidle" });
 await page.getByRole("button", { name: "Chat" }).tap(); await expectPath("/chats"); ok("Tab → Chats");
@@ -84,6 +84,7 @@ await tap("What Evo remembers"); await expectPath("/settings/memory"); ok("Setti
 await page.getByRole("button", { name: "Forget" }).first().tap();
 await page.getByText("Forgotten.").waitFor(); ok("Forget shows Undo toast");
 await tap("Undo"); await page.getByText("Exams make starting hard — Maths most of all.").waitFor(); ok("Undo restores memory");
+await page.getByText("Forgotten.").waitFor({ state: "detached" }); await page.waitForTimeout(300);
 await page.getByRole("button", { name: "Edit" }).first().tap();
 await page.locator("textarea").fill("Maths is the hardest to start.");
 await tap("Save"); await page.getByText("Maths is the hardest to start.").waitFor(); ok("Edit memory");
@@ -129,6 +130,23 @@ for (const r of ["/voice", "/notifications", "/manifest.webmanifest", "/icon.png
   if (!res.ok()) throw new Error(`${r} → ${res.status()}`);
 }
 ok("Voice, notifications, manifest and icons resolve");
+
+console.log("Desktop (1440 × 900)");
+const desk = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+desk.on("pageerror", (e) => errors.push(`desktop ${desk.url()} :: ${e.message}`));
+await desk.goto(BASE + "/home", { waitUntil: "networkidle" });
+await desk.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Chats" }).click();
+await desk.waitForURL("**/chats"); ok("Sidebar → Chats");
+await desk.getByRole("button", { name: "New chat" }).first().click();
+await desk.waitForURL("**/chat"); ok("New chat opens the workspace");
+await desk.goto(BASE + "/chat?checkedIn=1", { waitUntil: "networkidle" });
+await desk.getByRole("complementary", { name: "Your plan" }).waitFor(); ok("Plan panel beside the thread");
+await desk.getByText("I can’t make myself start", { exact: true }).click();
+await desk.getByText("Yes, that’s me", { exact: true }).click();
+await desk.getByRole("button", { name: "Make a recovery plan" }).click();
+await desk.getByText("Here’s a gentle plan", { exact: false }).waitFor(); ok("Help chips → recovery plan");
+await desk.keyboard.press("Control+K");
+await desk.waitForURL("**/check-in"); ok("Ctrl/⌘ K → quick check-in");
 
 await browser.close();
 if (errors.length) {

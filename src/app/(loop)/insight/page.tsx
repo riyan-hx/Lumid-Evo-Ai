@@ -28,7 +28,7 @@ export default function InsightScreen() {
   };
 
   return (
-    <Screen glows={glows.wash} under={<TopWash />}>
+    <Screen glows={glows.wash} under={<TopWash />} app>
       <div className="relative flex flex-1 flex-col pt-[54px]">
         <ChatHeader subtitle="Exam stress" status={false} />
         <div className="flex flex-col px-6">

@@ -13,19 +13,24 @@ import {
   PrivacyNote,
   TypingDots,
   UserBubble,
+  WideChatHeader,
   type Choice,
 } from "@/components/evo/chat-bits";
 import { Composer } from "@/components/evo/composer";
 import { OfflineBanner } from "@/components/evo/offline-banner";
 import { InsightCard, type Insight } from "@/components/evo/insight-card";
 import { PlanCard } from "@/components/evo/plan-card";
-import { glows } from "@/components/ui/backdrop";
+import { PlanPanel } from "@/components/evo/plan-panel";
+import { ChatList } from "@/components/evo/chat-list";
+import { glows, wideGlows } from "@/components/ui/backdrop";
 import { SoftChip } from "@/components/ui/controls";
+import { Icon } from "@/components/ui/icons";
 import { Pill } from "@/components/ui/pill";
 import { Screen } from "@/components/ui/screen";
 import { arriving, help, insight as baseInsight, insightTired, plan, weighing } from "@/lib/mock";
 import { spring } from "@/lib/motion";
 import { riskCheck } from "@/lib/safety";
+import { cn } from "@/lib/cn";
 import { useApp } from "@/lib/store";
 import { clock, inMinutes } from "@/lib/time";
 
@@ -54,7 +59,7 @@ export function GuidedChat({ checkedIn, q, venting }: { checkedIn: boolean; q?: 
   const [notQuiteUsed, setNotQuiteUsed] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLDivElement>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const alive = useRef(true);
 
   const push = useCallback((...b: Block[]) => setBlocks((prev) => [...prev, ...b.map(withId)]), []);
 
@@ -62,12 +67,11 @@ export function GuidedChat({ checkedIn, q, venting }: { checkedIn: boolean; q?: 
   const evo = useCallback(
     (...b: Block[]) => {
       setTyping(true);
-      timers.current.push(
-        setTimeout(() => {
-          setTyping(false);
-          push(...b);
-        }, 700),
-      );
+      setTimeout(() => {
+        if (!alive.current) return;
+        setTyping(false);
+        push(...b);
+      }, 700);
     },
     [push],
   );
@@ -107,9 +111,12 @@ export function GuidedChat({ checkedIn, q, venting }: { checkedIn: boolean; q?: 
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Survives StrictMode's simulated remount; drops replies only after a real unmount.
   useEffect(() => {
-    const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -240,17 +247,20 @@ export function GuidedChat({ checkedIn, q, venting }: { checkedIn: boolean; q?: 
         const onPick = b.primary ? onHelp : onWeigh;
         return (
           <div className="flex w-full flex-col gap-2">
-            {b.choices.map((c, i) => (
-              <OptionRow
-                key={c.label}
-                choice={c}
-                index={i}
-                primary={b.primary && i === 0 && !b.picked}
-                selected={b.picked === c.label}
-                dimmed={!!b.picked && b.picked !== c.label}
-                onPick={() => onPick(b.id, c)}
-              />
-            ))}
+            <div className={cn("flex w-full flex-col gap-2", b.primary && "md:hidden")}>
+              {b.choices.map((c, i) => (
+                <OptionRow
+                  key={c.label}
+                  choice={c}
+                  index={i}
+                  primary={b.primary && i === 0 && !b.picked}
+                  selected={b.picked === c.label}
+                  dimmed={!!b.picked && b.picked !== c.label}
+                  onPick={() => onPick(b.id, c)}
+                />
+              ))}
+            </div>
+            {b.primary && <HelpChips choices={b.choices} picked={b.picked} onPick={(c) => onPick(b.id, c)} />}
             {!b.picked &&
               (b.ghost === "later" ? (
                 <GhostAction
@@ -317,31 +327,90 @@ export function GuidedChat({ checkedIn, q, venting }: { checkedIn: boolean; q?: 
   };
 
   return (
-    <Screen glows={glows.chat}>
-      <div className="sticky top-0 z-20 bg-gradient-to-b from-paper via-paper/85 via-60% to-paper/0 pt-[54px] pb-5">
-        <ChatHeader />
-        <div className="mt-3 px-6 empty:hidden">
-          <OfflineBanner />
-        </div>
-      </div>
+    <Screen glows={glows.chat} wide={wideGlows.chat} app full>
+      <div className="flex flex-1 md:gap-4 md:pr-4">
+        <ChatList active="Exam stress" className="hidden md:flex xl:hidden" />
 
-      <div className="flex flex-col gap-[18px] px-6 pt-1 pb-6" aria-live="polite">
-        {blocks.map((b) => (
-          <motion.div key={b.id} layout="position" transition={spring.default} className="w-full">
-            {render(b)}
-          </motion.div>
-        ))}
-        <AnimatePresence>{typing && <TypingDots key="typing" />}</AnimatePresence>
-        <div ref={end} className="h-px" />
-      </div>
+        <section className="flex min-w-0 flex-1 flex-col">
+          <div className="sticky top-0 z-20 bg-gradient-to-b from-paper via-paper/85 via-60% to-paper/0 pt-[54px] pb-5 md:bg-none md:bg-paper/70 md:px-4 md:pt-4 md:pb-6 md:backdrop-blur-[18px] md:[mask-image:linear-gradient(to_bottom,black_78%,transparent)]">
+            <div className="md:hidden">
+              <ChatHeader />
+            </div>
+            <div className="mx-auto hidden max-w-[740px] md:block">
+              <WideChatHeader />
+            </div>
+            <div className="mx-auto mt-3 px-6 empty:hidden md:max-w-[648px] md:px-0 xl:max-w-[620px]">
+              <OfflineBanner />
+            </div>
+          </div>
 
-      <div
-        ref={composer}
-        className="sticky bottom-0 z-20 mt-auto flex flex-col items-center gap-2.5 bg-gradient-to-b from-paper/0 via-paper/95 via-35% to-paper px-5 pt-7 pb-6"
-      >
-        <Composer placeholder="Reply to Evo…" onSend={onType} />
-        <PrivacyNote />
+          <div className="mx-auto flex w-full flex-col gap-[18px] px-6 pt-1 pb-6 md:max-w-[696px] xl:max-w-[668px]" aria-live="polite">
+            {blocks.map((b) => (
+              <motion.div key={b.id} layout="position" transition={spring.default} className="w-full">
+                {render(b)}
+              </motion.div>
+            ))}
+            <AnimatePresence>{typing && <TypingDots key="typing" />}</AnimatePresence>
+            <div ref={end} className="h-px" />
+          </div>
+
+          <div
+            ref={composer}
+            className="sticky bottom-0 z-20 mt-auto flex flex-col items-center gap-2.5 bg-gradient-to-b from-paper/0 via-paper/95 via-35% to-paper px-5 pt-7 pb-6 md:from-paper/0 md:via-paper/80 md:to-paper/95 md:pb-4"
+          >
+            <div className="w-full md:max-w-[680px]">
+              <Composer placeholder="Reply to Evo…" onSend={onType} />
+            </div>
+            <PrivacyNote />
+          </div>
+        </section>
+
+        <PlanPanel className="my-4 hidden xl:flex" />
       </div>
     </Screen>
+  );
+}
+
+/** Tablet/desktop help options: forest chip for the recommended one, soft chips for the rest. */
+function HelpChips({ choices, picked, onPick }: { choices: Choice[]; picked?: string; onPick: (c: Choice) => void }) {
+  return (
+    <div className="hidden flex-wrap gap-2 md:flex">
+      <AnimatePresence initial={false}>
+        {choices
+          .filter((c) => !picked || c.label === picked)
+          .map((c, i) =>
+            i === 0 && !picked ? (
+              <motion.button
+                key={c.label}
+                layout
+                type="button"
+                onClick={() => onPick(c)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                transition={spring.snappy}
+                className="group flex h-[46px] cursor-pointer items-center gap-2 rounded-full px-5 type-label-m text-white shadow-[0_14px_28px_-10px_rgba(20,26,18,0.35)]"
+                style={{ background: "var(--gradient-forest)" }}
+              >
+                {c.label}
+                <Icon name="arrow-right" size={18} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+              </motion.button>
+            ) : (
+              <motion.div
+                key={c.label}
+                layout
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                transition={{ ...spring.snappy, delay: picked ? 0 : i * 0.04 }}
+              >
+                <SoftChip label={c.label} height={44} selected={picked === c.label} onClick={() => !picked && onPick(c)} />
+              </motion.div>
+            ),
+          )}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 import { riseIn } from "@/lib/motion";
 import { useApp } from "@/lib/store";
 import { today } from "@/lib/time";
+import { HomeWide } from "./home-wide";
 
 const why: { icon: IconName; tile: string; color: string; text: string }[] = [
   { icon: "moon", tile: "bg-lavender-soft", color: "text-lavender-text", text: "Slept after 1 AM last night" },
@@ -42,8 +43,8 @@ export default function Home() {
   };
 
   return (
-    <Screen glows={glows.home} nav>
-      <div className="flex flex-col gap-4 px-6 pt-[54px] pb-6">
+    <Screen glows={glows.home} nav full>
+      <div className="flex flex-col gap-4 px-6 pt-[54px] pb-6 md:hidden">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="type-caption text-t3">{date}</span>
@@ -182,6 +183,7 @@ export default function Home() {
         </div>
       </div>
 
+      <HomeWide />
       <AskEvoSheet context={ask} onClose={() => setAsk(null)} />
     </Screen>
   );
