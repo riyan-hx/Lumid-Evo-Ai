@@ -44,7 +44,7 @@ export function WideChatHeader({ title = "Exam stress", subtitle = "Evo is here 
       </div>
       <IconButton icon="mic" label="Voice" href="/voice" className="size-10" />
       <IconButton icon="lifebuoy" label="Crisis support" href="/crisis" className="size-10" />
-      <IconButton icon="more" label="More" className="size-10" />
+      <IconButton icon="more" label="All chats" href="/chats" className="size-10" />
     </div>
   );
 }

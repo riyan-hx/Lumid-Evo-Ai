@@ -20,7 +20,7 @@ const items: Item[] = [
   { label: "Voice", icon: "mic", href: "/voice", match: ["/voice"], rail: true },
   { label: "Plans", icon: "path", href: "/step-booked", match: ["/step-booked", "/focus"], rail: true },
   { label: "Your wins", icon: "heart", href: "/wins", match: ["/wins"], rail: true },
-  { label: "Forecast", icon: "cloud", href: "/insight", match: ["/insight"], plus: true },
+  { label: "Forecast", icon: "cloud", href: "/forecast", match: ["/forecast"], plus: true },
 ];
 
 function useActive() {

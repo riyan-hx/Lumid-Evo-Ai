@@ -40,6 +40,18 @@ function CountUp({ to }: { to: number }) {
 /** 08 · Your wins — counts starts, not completions. */
 export default function Wins() {
   const [range, setRange] = useState<Range>("Month");
+  const [copied, setCopied] = useState(false);
+  const shareWin = async () => {
+    const text = "I’ve been starting the things I usually avoid — one small step at a time, with Evo.";
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {}
+  };
   const s = stats[range];
   const max = Math.max(...s.bars);
 
@@ -70,7 +82,7 @@ export default function Wins() {
               </button>
             ))}
           </div>
-          <IconButton icon="heart" label="Share a win" />
+          <IconButton icon="heart" label="Share a win" onClick={shareWin} />
         </div>
 
         <h1 className="text-[34px] leading-[1.06] font-medium tracking-[-1.02px] text-forest">
@@ -180,6 +192,11 @@ export default function Wins() {
 
         <Pill label="Write a note to future you" className="w-full" href="/chat?checkedIn=1" />
       </div>
+      {copied && (
+        <div role="status" className="fixed inset-x-0 bottom-[max(24px,env(safe-area-inset-bottom))] z-40 mx-auto w-fit rounded-full bg-forest px-4 py-2.5 type-label-m text-white shadow-[0_14px_28px_-10px_rgba(20,26,18,0.4)]">
+          Copied — paste it anywhere
+        </div>
+      )}
     </Screen>
   );
 }

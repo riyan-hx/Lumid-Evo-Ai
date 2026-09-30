@@ -30,8 +30,16 @@ const chats: { icon: IconName; tile: string; color: string; title: string; meta:
 ];
 
 /** 03 · Home (Variation A) */
+const TOOLS = [
+  { icon: "pause", tile: "bg-peach-soft", color: "text-peach-text", title: "Unstuck ladder", meta: "Shrink what you’re avoiding", href: "/ladder" },
+  { icon: "cloud", tile: "bg-sky-soft", color: "text-sky-text", title: "Your forecast", meta: "Hard-to-start windows", href: "/forecast" },
+  { icon: "wind", tile: "bg-mint-soft", color: "text-mint-text", title: "Calm space", meta: "Breathe for 1 minute", href: "/calm" },
+  { icon: "user", tile: "bg-lime-soft", color: "text-lime-deep", title: "Session bridge", meta: "Prep for your psychologist", href: "/bridge" },
+] as const;
+
 export default function Home() {
   const router = useRouter();
+  const [windDown, setWindDown] = useState(false);
   const { name } = useApp();
   const { date, greeting } = today();
   const [reply, setReply] = useState<string | null>(null);
@@ -71,7 +79,7 @@ export default function Home() {
               <span className="type-label-m text-ink">Your evening brief</span>
               <span className="type-caption text-t3">from Evo · 6:02 PM</span>
             </div>
-            <button type="button" aria-label="More" className="cursor-pointer text-t3">
+            <button type="button" aria-label="Open brief" onClick={() => router.push("/insight")} className="cursor-pointer text-t3 transition-transform active:scale-90">
               <Icon name="more" size={18} />
             </button>
           </div>
@@ -122,7 +130,7 @@ export default function Home() {
           <Pill label="Continue chat" variant="lime" height={42} className="self-start" href="/chat?checkedIn=1" />
         </motion.section>
 
-        <SectionTitle title="Today with Evo" action="Edit" />
+        <SectionTitle title="Today with Evo" action="Edit" onAction={() => router.push("/reminders")} />
         <div className="flex flex-col">
           <TimelineItem
             time="6:45 PM"
@@ -140,12 +148,12 @@ export default function Home() {
             <AskEvo onClick={() => setAsk({ card: "Evening check-in", line: "8:00 PM · 10 seconds" })} />
           </TimelineItem>
           <TimelineItem time="10:30 PM" last suggested icon="moon" tile="bg-lavender-soft" color="text-lavender-text" title="Wind down" meta="Suggested — you slept late yesterday">
-            <Pill label="Add" variant="glass" icon={null} height={36} className="px-4" />
+            <Pill label={windDown ? "Added" : "Add"} variant={windDown ? "lime" : "glass"} icon={windDown ? "check" : null} height={36} className="px-4" onClick={() => setWindDown((v) => !v)} />
             <AskEvo onClick={() => setAsk({ card: "Wind down", line: "Suggested for 10:30 PM" })} />
           </TimelineItem>
         </div>
 
-        <SectionTitle title="Evo noticed" />
+        <SectionTitle title="Evo noticed" action="Forecast" onAction={() => router.push("/forecast")} />
         <section className="flex w-full flex-col gap-3 rounded-3xl bg-gradient-to-r from-[#ffe7da] to-[#fff6e3] p-4">
           <div className="flex items-center gap-2.5">
             <span className="flex size-[34px] shrink-0 items-center justify-center rounded-[11.33px] bg-peach-soft text-peach-text">
@@ -179,6 +187,27 @@ export default function Home() {
                 <span className="type-caption text-t3">{c.meta}</span>
               </span>
             </button>
+          ))}
+        </div>
+
+        <SectionTitle title="More ways Evo helps" />
+        <div className="grid grid-cols-2 gap-2.5">
+          {TOOLS.map((t) => (
+            <motion.button
+              key={t.href}
+              type="button"
+              whileTap={{ scale: 0.97 }}
+              onClick={() => router.push(t.href)}
+              className="glass flex cursor-pointer flex-col items-start gap-2.5 rounded-[20px] p-3.5 text-left"
+            >
+              <span className={cn("flex size-9 items-center justify-center rounded-xl", t.tile, t.color)}>
+                <Icon name={t.icon} size={18} />
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="type-label-m text-ink">{t.title}</span>
+                <span className="type-caption text-t3">{t.meta}</span>
+              </span>
+            </motion.button>
           ))}
         </div>
       </div>

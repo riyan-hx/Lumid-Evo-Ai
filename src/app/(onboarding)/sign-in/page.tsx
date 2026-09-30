@@ -41,10 +41,11 @@ export default function SignIn() {
             touched && !valid && !focused && "border-[1.5px] border-t-danger shadow-none",
           )}
         >
-          <button type="button" className="flex cursor-pointer items-center gap-1 border-r border-line pr-3 type-label-m text-ink">
+          {/* India only for now — shown as a fixed prefix rather than a picker with one option. */}
+          <span className="flex items-center gap-1 border-r border-line pr-3 type-label-m text-ink" aria-label="Country code India +91">
+            <span aria-hidden>🇮🇳</span>
             +91
-            <Icon name="chevron-down" size={14} className="text-t3" />
-          </button>
+          </span>
           <input
             id="phone"
             inputMode="numeric"

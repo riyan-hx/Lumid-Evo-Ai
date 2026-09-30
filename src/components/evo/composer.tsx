@@ -81,6 +81,7 @@ export function Composer({
       <motion.button
         type="button"
         aria-label="Hold to talk"
+        onClick={() => router.push("/voice")}
         whileTap={{ scale: 0.9 }}
         transition={spring.snappy}
         className={cn(
