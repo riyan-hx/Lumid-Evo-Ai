@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useTransform } from "motion/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { glows } from "@/components/ui/backdrop";
 import { BackButton, SoftChip } from "@/components/ui/controls";
 import { Icon } from "@/components/ui/icons";
@@ -26,7 +26,17 @@ const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${St
 
 /** 10 · Focus with Evo — full-screen, no nav. The ring advances continuously. */
 export default function Focus() {
+  return (
+    <Suspense>
+      <FocusScreen />
+    </Suspense>
+  );
+}
+
+function FocusScreen() {
   const router = useRouter();
+  // A step handed over from the Unstuck ladder (or anywhere else) via ?task=.
+  const task = useSearchParams().get("task")?.trim() || "Open to page 112";
   const [paused, setPaused] = useState(false);
   const [stuck, setStuck] = useState(false);
   const progress = useMotionValue(0);
@@ -72,7 +82,7 @@ export default function Focus() {
             <Icon name="book" size={19} />
           </span>
           <div className="flex flex-col gap-px">
-            <span className="type-label-m text-ink">Open to page 112</span>
+            <span className="type-label-m text-ink">{task}</span>
             <span className="type-caption text-t3">Then keep going if it feels okay</span>
           </div>
         </div>

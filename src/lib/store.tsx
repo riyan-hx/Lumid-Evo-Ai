@@ -17,7 +17,16 @@ type State = {
   policyVersion?: string;
   safetyPauseUntil?: number;
   memories: Memory[];
+  languages: string[];
+  psychologist: Psychologist | null;
+  shares: { mood: boolean; steps: boolean; summary: boolean };
+  plan: Plan;
+  notificationsSeenAt?: number;
+  snoozedUntil?: number;
 };
+
+export type Psychologist = { code: string; name: string; initials: string; role: string; city: string };
+export type Plan = { tier: "free" | "plus"; interval: "monthly" | "yearly"; price: string; renews: string; lastReceipt: string; cancelled: boolean };
 
 const initial: State = {
   name: "Alex",
@@ -33,6 +42,10 @@ const initial: State = {
     { id: "m3", text: "A 3-minute brain dump helps you begin.", source: "From your wins", date: "24 Sep" },
     { id: "m4", text: "Prefers Malayalam for voice chats.", source: "From Settings", date: "" },
   ],
+  languages: ["English", "Malayalam"],
+  psychologist: null,
+  shares: { mood: false, steps: false, summary: false },
+  plan: { tier: "plus", interval: "yearly", price: "₹1,499", renews: "12 Sep 2027", lastReceipt: "12 Sep 2026", cancelled: false },
 };
 
 const KEY = "evo-state-v1";

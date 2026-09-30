@@ -147,7 +147,8 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-:focus-visible {
+/* Text fields show focus through their own border/ring, so the outline is for everything else. */
+:focus-visible:not(input, textarea) {
   outline: 2px solid var(--color-lime-deep);
   outline-offset: 2px;
 }

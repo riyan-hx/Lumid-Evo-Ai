@@ -25,6 +25,7 @@ const RING_C = 2 * Math.PI * RING_R;
 /** 07 · Calm space — guided 4-2-6 breathing. Works offline; crisis link always visible. */
 export default function Calm() {
   const router = useRouter();
+  const [dim, setDim] = useState(false);
   const reduce = useReducedMotion();
   const [round, setRound] = useState(1);
   const [index, setIndex] = useState(0);
@@ -70,7 +71,7 @@ export default function Calm() {
             <span className="size-1.5 rounded-full bg-lime" />
             Calm space
           </span>
-          <IconButton icon="moon" label="Sleep mode" dark />
+          <IconButton icon="moon" label={dim ? "Leave sleep mode" : "Sleep mode"} dark onClick={() => setDim((d) => !d)} />
         </div>
 
         <p className="mt-[26px] text-center type-body-l text-white/70">Let’s slow things down together.</p>
@@ -210,6 +211,8 @@ export default function Calm() {
           </button>
         </div>
       </div>
+      {/* Sleep mode: dims the screen for bedtime breathing. */}
+      <div aria-hidden className={`pointer-events-none fixed inset-0 z-20 bg-black transition-opacity duration-500 ${dim ? "opacity-45" : "opacity-0"}`} />
     </Screen>
   );
 }

@@ -5,10 +5,12 @@ import { glows } from "@/components/ui/backdrop";
 import { BackButton, SoftChip } from "@/components/ui/controls";
 import { Icon } from "@/components/ui/icons";
 import { Screen } from "@/components/ui/screen";
+import { useApp } from "@/lib/store";
 
 /** 23 · Crisis support — tel: links, no network needed. */
 export default function Crisis() {
   const router = useRouter();
+  const { psychologist } = useApp();
   return (
     <Screen glows={glows.crisis}>
       <div className="flex flex-1 flex-col pt-[54px]">
@@ -50,7 +52,7 @@ export default function Crisis() {
             <span className="text-[24px] leading-[1.06] font-medium tracking-[-0.72px] text-peach-text">112</span>
           </a>
 
-          <button type="button" className="glass flex w-full cursor-pointer items-center gap-3 rounded-[22px] py-3.5 pr-4 pl-3.5 text-left">
+          <button type="button" onClick={() => router.push(psychologist ? "/bridge" : "/settings/psychologist")} className="glass flex w-full cursor-pointer items-center gap-3 rounded-[22px] py-3.5 pr-4 pl-3.5 text-left transition-transform active:scale-[0.985]">
             <span className="flex size-10 items-center justify-center rounded-[13.33px] bg-lime-soft text-lime-deep">
               <Icon name="user" size={20} />
             </span>

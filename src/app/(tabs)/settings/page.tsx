@@ -8,24 +8,127 @@ import { Icon } from "@/components/ui/icons";
 import { Screen } from "@/components/ui/screen";
 import { Sheet } from "@/components/ui/sheet";
 import { cn } from "@/lib/cn";
+import { exportMyData } from "@/lib/export";
 import { haptic } from "@/lib/motion";
 import { useApp } from "@/lib/store";
 import { SettingsList } from "./settings-list";
 
 /** 22 · Settings (+ 29 · Delete account sheet) */
 export default function Settings() {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [sheet, setSheet] = useState<null | "delete" | "language" | "help">(null);
+  const app = useApp();
+  const close = () => setSheet(null);
   return (
     <Screen glows={glows.onboarding} nav>
-      <SettingsList onDelete={() => setConfirmDelete(true)} />
-      <DeleteSheet open={confirmDelete} onClose={() => setConfirmDelete(false)} />
+      <SettingsList
+        onDelete={() => setSheet("delete")}
+        onLanguage={() => setSheet("language")}
+        onExport={() => exportMyData(snapshot(app))}
+        onHelp={() => setSheet("help")}
+      />
+      <DeleteSheet open={sheet === "delete"} onClose={close} />
+      <LanguageSheet open={sheet === "language"} onClose={close} />
+      <HelpSheet open={sheet === "help"} onClose={close} />
     </Screen>
+  );
+}
+
+/** The stored state without functions — what "Export my data" downloads. */
+function snapshot(app: ReturnType<typeof useApp>) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { update, reset, ...data } = app;
+  return data;
+}
+
+const LANGS = [
+  { id: "English", hint: "Chat and voice" },
+  { id: "Malayalam", hint: "മലയാളം · voice and Manglish chat" },
+];
+
+function LanguageSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { languages, update } = useApp();
+  const toggle = (id: string) => {
+    haptic("selection");
+    const next = languages.includes(id) ? languages.filter((l) => l !== id) : [...languages, id];
+    if (next.length) update({ languages: next });
+  };
+  return (
+    <Sheet open={open} onClose={onClose} label="Language">
+      <div className="flex flex-col gap-3 px-1 pb-2">
+        <h2 className="text-[24px] leading-[1.1] font-medium tracking-[-0.6px] text-ink">Language</h2>
+        <p className="type-body-m text-t2">Evo replies in the language you write or speak in. Pick at least one.</p>
+        {LANGS.map((l) => {
+          const on = languages.includes(l.id);
+          return (
+            <button
+              key={l.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggle(l.id)}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-[20px] border px-4 py-3.5 text-left transition-colors duration-200",
+                on ? "border-[1.5px] border-lime bg-lime-soft" : "border-line bg-white",
+              )}
+            >
+              <span className="flex flex-1 flex-col gap-0.5">
+                <span className="type-label-m text-t1">{l.id}</span>
+                <span className="type-caption text-t3">{l.hint}</span>
+              </span>
+              <span className={cn("flex size-6 items-center justify-center rounded-full transition-colors", on ? "bg-forest text-white" : "border border-line-strong")}>
+                {on && <Icon name="check" size={14} />}
+              </span>
+            </button>
+          );
+        })}
+        <button type="button" onClick={onClose} className="flex h-[52px] cursor-pointer items-center justify-center rounded-full type-label-m text-white" style={{ background: "var(--gradient-forest)" }}>
+          Done
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
+function HelpSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const rows = [
+    { icon: "chat" as const, title: "Send feedback", hint: "Tell us what’s working and what isn’t", href: "mailto:hello@lumidai.in?subject=Evo%20feedback" },
+    { icon: "book" as const, title: "Report a problem", hint: "Something broken or confusing", href: "mailto:hello@lumidai.in?subject=Evo%20problem" },
+  ];
+  return (
+    <Sheet open={open} onClose={onClose} label="Help and feedback">
+      <div className="flex flex-col gap-3 px-1 pb-2">
+        <h2 className="text-[24px] leading-[1.1] font-medium tracking-[-0.6px] text-ink">Help &amp; feedback</h2>
+        {rows.map((r) => (
+          <a key={r.title} href={r.href} className="flex items-center gap-3 rounded-[20px] border border-line bg-white px-4 py-3.5">
+            <Icon name={r.icon} size={18} className="text-t2" />
+            <span className="flex flex-1 flex-col gap-0.5">
+              <span className="type-label-m text-t1">{r.title}</span>
+              <span className="type-caption text-t3">{r.hint}</span>
+            </span>
+            <Icon name="chevron-right" size={16} className="text-t3" />
+          </a>
+        ))}
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            router.push("/crisis");
+          }}
+          className="flex cursor-pointer items-center gap-3 rounded-[20px] bg-danger-subtle px-4 py-3.5 text-left"
+        >
+          <Icon name="lifebuoy" size={18} className="text-t-danger" />
+          <span className="flex-1 type-label-m text-t-danger">Need help right now? Crisis support</span>
+          <Icon name="chevron-right" size={16} className="text-t-danger" />
+        </button>
+      </div>
+    </Sheet>
   );
 }
 
 function DeleteSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
-  const { reset } = useApp();
+  const app = useApp();
+  const { reset } = app;
   const [typed, setTyped] = useState("");
   const shake = useAnimationControls();
   const ready = typed.trim() === "DELETE";
@@ -51,7 +154,7 @@ function DeleteSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
           This permanently deletes your chats, check-ins, memories and plans within 30 days. It can’t be undone. Your Plus
           subscription is cancelled separately in Google Play.
         </p>
-        <button type="button" className="flex cursor-pointer items-center gap-3 rounded-[18px] border border-line bg-white px-3.5 py-3 text-left">
+        <button type="button" onClick={() => exportMyData(snapshot(app))} className="flex cursor-pointer items-center gap-3 rounded-[18px] border border-line bg-white px-3.5 py-3 text-left">
           <Icon name="book" size={18} className="text-t1" />
           <span className="flex-1 type-label-m text-t1">Export my data first</span>
           <Icon name="chevron-right" size={16} className="text-t3" />

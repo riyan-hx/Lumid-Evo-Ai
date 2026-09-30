@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Icon } from "@/components/ui/icons";
 import { Pill } from "@/components/ui/pill";
@@ -23,6 +24,7 @@ const details = [
 
 /** 05 · Step booked */
 export default function StepBooked() {
+  const router = useRouter();
   const step = plan.steps[0];
   useEffect(() => haptic("success"), []);
 
@@ -109,6 +111,7 @@ export default function StepBooked() {
           <motion.button
             type="button"
             aria-label="Edit reminder"
+            onClick={() => router.push("/reminders")}
             whileTap={{ scale: 0.92 }}
             className="flex size-[58px] shrink-0 cursor-pointer items-center justify-center rounded-[29px] border border-line bg-white text-ink"
           >

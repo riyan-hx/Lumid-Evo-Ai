@@ -28,10 +28,10 @@ const week = [
 ];
 
 const shortcuts: (Tile & { title: string; meta: string; href: string })[] = [
-  { icon: "pause", tile: "bg-peach-soft", color: "text-peach-text", title: "Unstuck ladder", meta: "Shrink a task you’re avoiding", href: "/chat?checkedIn=1" },
+  { icon: "pause", tile: "bg-peach-soft", color: "text-peach-text", title: "Unstuck ladder", meta: "Shrink a task you’re avoiding", href: "/ladder" },
   { icon: "wind", tile: "bg-mint-soft", color: "text-mint-text", title: "Calm space", meta: "Breathe for 1 minute", href: "/calm" },
   { icon: "mic", tile: "bg-lavender-soft", color: "text-lavender-text", title: "Voice", meta: "Talk in English or Malayalam", href: "/voice" },
-  { icon: "user", tile: "bg-lime-soft", color: "text-lime-deep", title: "Session bridge", meta: "Prep for Thursday with Dr. Meera", href: "/chats" },
+  { icon: "user", tile: "bg-lime-soft", color: "text-lime-deep", title: "Session bridge", meta: "Prep for your next session", href: "/bridge" },
 ];
 
 const starters = [
@@ -263,6 +263,7 @@ function WideComposer() {
         <motion.button
           type="button"
           aria-label="Hold to talk"
+          onClick={() => router.push("/voice")}
           whileTap={{ scale: 0.9 }}
           transition={spring.snappy}
           className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[22px] bg-subtle text-t2"
