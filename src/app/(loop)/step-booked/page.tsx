@@ -70,7 +70,7 @@ export default function StepBooked() {
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ ...spring.gentle, delay: 0.2 }}
-          className="relative mt-[18px] w-[345px] overflow-hidden rounded-[30px] bg-white shadow-[0_24px_44px_-14px_rgba(31,71,20,0.14)]"
+          className="relative mt-[18px] w-[min(345px,calc(100vw-32px))] self-center overflow-hidden rounded-[30px] bg-white shadow-[0_24px_44px_-14px_rgba(31,71,20,0.14)]"
         >
           <div className="relative h-28 bg-gradient-to-r from-[#d9f5ec] via-[#e4f7d6] via-55% to-[#fff6d6] px-[22px] pt-6">
             <p className="text-[24px] leading-[1.06] font-medium tracking-[-0.72px] text-ink">{step.title}</p>

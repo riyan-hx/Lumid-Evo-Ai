@@ -94,7 +94,7 @@ export default function SignIn() {
           whileTap={{ scale: 0.97 }}
           transition={spring.snappy}
           onClick={() => router.push("/goals")}
-          className="mt-3.5 flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-white bg-white/90 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]"
+          className="mt-3.5 flex h-[58px] w-full cursor-pointer items-center justify-center gap-3 rounded-full border border-white bg-white/90 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]"
         >
           <span
             className="bg-clip-text text-[20px] font-medium text-transparent"

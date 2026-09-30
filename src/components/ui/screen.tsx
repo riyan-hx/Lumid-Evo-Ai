@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "motion/react";
+import { LayoutGroup, motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { haptic, spring } from "@/lib/motion";
 import { NavRail, Sidebar } from "./app-nav";
@@ -51,15 +51,19 @@ export function Screen({ children, glows = [], wide, rays, dark, background, gra
         </>
       )}
       <div className={cn("relative flex flex-1 flex-col", shell && "md:pl-[92px] xl:pl-[264px]")}>
-        <motion.main
-          className={cn("relative mx-auto flex w-full flex-1 flex-col", !full && (shell ? "md:max-w-[600px]" : "md:max-w-[460px]"), className)}
-          initial={still ? { opacity: 0 } : { opacity: 0, x: 24 }}
-          animate={still ? { opacity: 1 } : { opacity: 1, x: 0 }}
-          transition={still ? { duration: 0.24 } : spring.default}
+        {/* CSS entry animation: runs before hydration, so server-rendered pages are visible immediately. */}
+        <main
+          className={cn(
+            "relative mx-auto flex w-full flex-1 flex-col",
+            still || nav ? "evo-enter-fade" : "evo-enter",
+            !full && (shell ? "md:max-w-[600px]" : "md:max-w-[460px]"),
+            className,
+          )}
         >
           {children}
-        </motion.main>
-        {nav && <BottomNav />}
+        </main>
+        {/* The tab bar itself lives in the root layout (TabBar) so it never remounts between tabs. */}
+        {nav && <div aria-hidden className="h-[calc(106px+max(env(safe-area-inset-bottom),14px))] shrink-0 md:hidden" />}
       </div>
     </div>
   );
@@ -74,70 +78,79 @@ const tabs: { key: string; label: string; icon: IconName; href: string; match: s
   { key: "settings", label: "Settings", icon: "settings", href: "/settings", match: ["/settings"] },
 ];
 
-export function BottomNav() {
+/** Routes that show the phone tab bar (exact matches — sub-pages like /settings/memory have a back button). */
+const TAB_ROUTES = ["/home", "/first-day", "/chats", "/voice", "/settings"];
+
+/**
+ * Phone tab bar, mounted once in the root layout. Because it never unmounts, the active pill glides
+ * between tabs, and the tap is reflected instantly (optimistic) while the next page loads.
+ */
+export function TabBar() {
   const path = usePathname();
   const router = useRouter();
-  const active = tabs.find((t) => t.match.some((m) => path.startsWith(m)))?.key ?? "home";
+  const routeKey = tabs.find((t) => t.match.some((m) => path === m || path.startsWith(`${m}/`)))?.key ?? "home";
+  // Optimistic target, valid only until the route actually changes.
+  const [pending, setPending] = useState<{ key: string; from: string } | null>(null);
+  const waiting = pending && pending.from === path ? pending.key : null;
+  const active = waiting ?? routeKey;
+  useEffect(() => {
+    tabs.forEach((t) => router.prefetch(t.href));
+  }, [router]);
+
+  if (!TAB_ROUTES.includes(path)) return null;
 
   return (
-    <div className="pointer-events-none sticky bottom-0 z-30 mt-auto flex justify-center md:hidden pb-[max(env(safe-area-inset-bottom),14px)]">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[140px] bg-gradient-to-b from-paper/0 via-paper/95 via-50% to-paper" />
-      <nav
-        className="pointer-events-auto relative flex items-center gap-1.5 rounded-full border-[1.2px] border-dashed border-line-strong bg-white/82 p-1.5 backdrop-blur-[12px] drop-shadow-[0_12px_16px_rgba(15,36,26,0.12)]"
-        aria-label="Main"
-      >
-        {tabs.map((t) => {
-          const on = t.key === active;
-          return (
-            <motion.button
-              key={t.key}
-              type="button"
-              layout
-              onClick={() => {
-                if (on) return;
-                haptic("selection");
-                router.push(t.href);
-              }}
-              whileTap={{ scale: 0.94 }}
-              transition={spring.default}
-              aria-current={on ? "page" : undefined}
-              aria-label={t.label}
-              className={cn(
-                "relative flex cursor-pointer items-center overflow-hidden rounded-full bg-muted p-1",
-                on ? "gap-3.5 pr-[22px]" : "w-[60px]",
-              )}
-            >
-              <span className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[max(env(safe-area-inset-bottom),14px)] md:hidden">
+      <div className="absolute inset-x-0 bottom-0 h-[140px] bg-gradient-to-b from-paper/0 via-paper/95 via-50% to-paper" />
+      <LayoutGroup id="tabbar">
+        <nav
+          className="pointer-events-auto relative flex items-center gap-1.5 rounded-full border-[1.2px] border-dashed border-line-strong bg-white/82 p-1.5 shadow-[0_12px_16px_rgba(15,36,26,0.12)] backdrop-blur-[12px]"
+          aria-label="Tabs"
+        >
+          {tabs.map((t) => {
+            const on = t.key === active;
+            return (
+              <motion.button
+                key={t.key}
+                type="button"
+                layout
+                onPointerDown={() => router.prefetch(t.href)}
+                onClick={() => {
+                  if (t.key === active) return;
+                  haptic("selection");
+                  setPending({ key: t.key, from: path });
+                  router.push(t.href);
+                }}
+                whileTap={{ scale: 0.94 }}
+                transition={spring.snappy}
+                aria-current={on ? "page" : undefined}
+                aria-label={t.label}
+                className={cn(
+                  "relative flex cursor-pointer touch-manipulation items-center overflow-hidden rounded-full bg-muted p-1",
+                  on ? "gap-3.5 pr-[22px]" : "w-[60px]",
+                )}
+              >
+                <span className="relative flex size-[52px] shrink-0 items-center justify-center rounded-full">
+                  {on && <motion.span layoutId="nav-dot" className="absolute inset-0 rounded-full bg-forest" transition={spring.snappy} />}
+                  <span className={cn("relative transition-colors duration-150", on ? "text-white" : "text-t1")}>
+                    <Icon name={t.icon} size={22} />
+                  </span>
+                </span>
                 {on && (
                   <motion.span
-                    layoutId="nav-dot"
-                    className="absolute inset-0 rounded-full bg-forest"
-                    transition={spring.default}
-                  />
+                    className="type-label-m whitespace-nowrap text-t1"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.05, duration: 0.14 }}
+                  >
+                    {t.label}
+                  </motion.span>
                 )}
-                <motion.span
-                  className={cn("relative", on ? "text-white" : "text-t1")}
-                  initial={false}
-                  animate={{ scale: on ? [0.9, 1] : 1 }}
-                  transition={spring.default}
-                >
-                  <Icon name={t.icon} size={22} />
-                </motion.span>
-              </span>
-              {on && (
-                <motion.span
-                  className="type-label-m whitespace-nowrap text-t1"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.06, duration: 0.16 }}
-                >
-                  {t.label}
-                </motion.span>
-              )}
-            </motion.button>
-          );
-        })}
-      </nav>
+              </motion.button>
+            );
+          })}
+        </nav>
+      </LayoutGroup>
     </div>
   );
 }

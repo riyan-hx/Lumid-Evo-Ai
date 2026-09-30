@@ -118,33 +118,49 @@ export function Backdrop({
   );
 }
 
+/**
+ * A Figma layer blur on an ellipse ≈ a radial gradient that fades over the blur radius.
+ * Gradients are painted once and never need a filter pass, so long pages scroll smoothly on iOS.
+ */
 function GlowBlob({ g, left }: { g: Glow; left?: string }) {
+  const r = g.blur / 2;
+  const w = g.w + r * 2;
+  const h = g.h + r * 2;
+  const inner = Math.max(0, Math.min(0.9, 1 - (r * 2) / Math.min(w, h)));
   return (
     <div
-      className="absolute rounded-[50%]"
+      className="absolute"
       style={{
-        left: left ?? g.x,
-        top: g.y,
-        width: g.w,
-        height: g.h,
-        background: g.color,
+        left: left ? `calc(${left} - ${r}px)` : g.x - r,
+        top: g.y - r,
+        width: w,
+        height: h,
         opacity: g.opacity,
-        filter: `blur(${g.blur / 2}px)`,
+        background: `radial-gradient(closest-side, ${g.color} ${Math.round(inner * 55)}%, ${hexA(g.color, 0.5)} ${Math.round(inner * 55 + (100 - inner * 55) * 0.5)}%, ${hexA(g.color, 0)} 100%)`,
       }}
     />
   );
 }
 
+function hexA(hex: string, a: number) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
+/** Film grain: a 128 px tiled texture used as a mask, so any colour works and nothing is filtered per frame. */
 function Grain({ opacity, color }: { opacity: number; color: string }) {
-  const [r, g, b] = color.split(" ").map((c) => Number(c) / 255);
   return (
-    <svg className="absolute inset-0 size-full mix-blend-normal" style={{ opacity }}>
-      <filter id="evo-grain">
-        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch" />
-        <feColorMatrix type="matrix" values={`0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 1.4 -0.5`} />
-      </filter>
-      <rect width="100%" height="100%" filter="url(#evo-grain)" />
-    </svg>
+    <div
+      className="absolute inset-0"
+      style={{
+        opacity: Math.min(1, opacity * 1.3),
+        backgroundColor: `rgb(${color})`,
+        WebkitMaskImage: "url(/evo/grain.png)",
+        maskImage: "url(/evo/grain.png)",
+        WebkitMaskSize: "128px 128px",
+        maskSize: "128px 128px",
+      }}
+    />
   );
 }
 

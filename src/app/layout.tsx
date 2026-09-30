@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { TabBar } from "@/components/ui/screen";
 import { AppProvider } from "@/lib/store";
 import "./globals.css";
 
@@ -19,7 +20,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="antialiased">
       <body className="font-sans">
-        <AppProvider>{children}</AppProvider>
+        <AppProvider>
+          {children}
+          <TabBar />
+        </AppProvider>
       </body>
     </html>
   );

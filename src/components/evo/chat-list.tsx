@@ -111,7 +111,7 @@ export function ChatList({ active, className }: { active?: string; className?: s
           groups.map(({ g, items }) => (
             <motion.div key={g} layout className="flex flex-col gap-3.5 md:gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <p className="type-label-s text-t3">{g}</p>
-              <div className="glass flex flex-col rounded-[22px] px-3.5 md:gap-1 md:border-0 md:bg-transparent md:px-0 md:[filter:none] md:backdrop-blur-none">
+              <div className="glass flex flex-col rounded-[22px] px-3.5 md:gap-1 md:border-0 md:bg-transparent md:px-0 md:shadow-none md:backdrop-blur-none">
                 {items.map((c, i) => {
                   const on = c.title === active;
                   return (
