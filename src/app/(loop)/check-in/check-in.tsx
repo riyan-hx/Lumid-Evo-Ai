@@ -74,7 +74,7 @@ export function CheckIn({ onboarding }: { onboarding: boolean }) {
           </button>
         </div>
 
-        <h1 className="mx-auto mt-6 w-[345px] text-center text-[30px] leading-[34px] font-medium tracking-[-0.9px] text-forest">
+        <h1 className="mx-auto mt-6 w-full max-w-[345px] text-center text-[30px] leading-[34px] font-medium tracking-[-0.9px] text-forest">
           How are you feeling
           <br />
           right now?

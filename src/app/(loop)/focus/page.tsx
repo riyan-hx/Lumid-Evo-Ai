@@ -57,7 +57,7 @@ export default function Focus() {
       <div className="flex flex-1 flex-col pt-[54px]">
         <div className="relative flex h-11 items-center px-5">
           <BackButton />
-          <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-[7px] rounded-full border border-white bg-white/78 py-2 pr-3.5 pl-3 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
+          <div className="absolute left-1/2 flex -translate-x-1/2 items-center gap-[7px] rounded-full border border-white bg-white/78 py-2 pr-3.5 pl-3 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
             <motion.span
               className="size-2 rounded-full bg-lime shadow-[0_0_6px_1px_rgba(135,217,94,1)]"
               animate={paused ? { opacity: 0.4 } : { opacity: [1, 0.5, 1] }}
@@ -133,7 +133,7 @@ export default function Focus() {
         </div>
 
         <div className="mt-[22px] flex justify-center">
-          <div className="flex items-center gap-2.5 rounded-full border border-white bg-white/90 py-2 pr-4 pl-2 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
+          <div className="flex items-center gap-2.5 rounded-full border border-white bg-white/90 py-2 pr-4 pl-2 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
             <Orb size={30} state="breathing" />
             <AnimatePresence mode="wait">
               <motion.span key={line} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={ease.out} className="type-label-m text-ink">

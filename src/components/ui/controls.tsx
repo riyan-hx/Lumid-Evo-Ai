@@ -97,7 +97,7 @@ export function IconButton({ icon, label, onClick, href, dark, className, childr
         "relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[22px] border backdrop-blur-[12px]",
         dark
           ? "border-white/15 bg-white/10 text-white/90"
-          : "border-white bg-white/78 text-ink drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
+          : "border-white bg-white/78 text-ink shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
         className,
       )}
     >

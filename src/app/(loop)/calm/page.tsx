@@ -76,7 +76,7 @@ export default function Calm() {
         <p className="mt-[26px] text-center type-body-l text-white/70">Let’s slow things down together.</p>
 
         {/* Rings + orb, centred at (196, 330) in the Figma frame */}
-        <div className="relative mx-auto mt-0 size-[360px] shrink-0">
+        <div className="relative mx-auto mt-0 size-[360px] shrink-0 self-center origin-top max-[379px]:-mb-[54px] max-[379px]:scale-[0.85]">
           <span className="absolute inset-0 rounded-full border-[1.2px] border-[#a3e27d]/8" />
           <span className="absolute inset-[30px] rounded-full border-[1.2px] border-[#a3e27d]/14" />
           <span className="absolute inset-[58px] rounded-full border-[1.2px] border-[#a3e27d]/24" />

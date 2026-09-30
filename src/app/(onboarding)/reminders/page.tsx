@@ -81,7 +81,7 @@ export default function Reminders() {
                   "relative flex w-full cursor-pointer items-center gap-3 rounded-[20px] py-2.5 pr-4 pl-2.5 text-left transition-[background-color,border-color] duration-[160ms]",
                   on
                     ? "border-[1.5px] border-lime bg-lime-soft"
-                    : "border border-white bg-white/78 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
+                    : "border border-white bg-white/78 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
                 )}
               >
                 <span
@@ -140,7 +140,7 @@ export default function Reminders() {
                   "flex size-11 cursor-pointer items-center justify-center rounded-[22px] type-label-m transition-colors duration-[160ms]",
                   on
                     ? "text-white"
-                    : "border border-white bg-white/78 text-t2 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
+                    : "border border-white bg-white/78 text-t2 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
                 )}
                 style={on ? { background: "linear-gradient(135deg, #33412e 0%, #151a13 71.43%)" } : undefined}
               >
@@ -151,7 +151,7 @@ export default function Reminders() {
         </div>
 
         <p className="mt-6 px-7 type-label-s text-t2">Preview</p>
-        <div className="mx-6 mt-2 flex items-start gap-3 rounded-[22px] border border-white bg-white/92 px-3.5 py-3 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
+        <div className="mx-6 mt-2 flex items-start gap-3 rounded-[22px] border border-white bg-white/92 px-3.5 py-3 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]">
           <Orb size={40} state="still" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <div className="flex items-start justify-between">

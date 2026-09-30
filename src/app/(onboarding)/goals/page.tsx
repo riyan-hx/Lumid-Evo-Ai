@@ -74,7 +74,7 @@ export default function Goals() {
                   "flex h-[100px] cursor-pointer flex-col items-start gap-2.5 rounded-[20px] p-3.5 text-left transition-[background-color,border-color] duration-[160ms] ease-(--ease-out-evo)",
                   on
                     ? "border-[1.5px] border-lime bg-lime-soft"
-                    : "border border-white bg-white/78 backdrop-blur-[12px] drop-shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
+                    : "border border-white bg-white/78 backdrop-blur-[12px] shadow-[0_10px_13px_rgba(26,64,20,0.07)]",
                 )}
               >
                 <div className="flex w-full items-center justify-between">

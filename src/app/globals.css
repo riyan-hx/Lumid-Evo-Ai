@@ -127,7 +127,8 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid #fff;
-  filter: drop-shadow(0 10px 13px rgba(26, 64, 20, 0.07));
+  /* box-shadow, not filter: Safari drops backdrop-filter (and can blank the content) when both are on one element. */
+  box-shadow: 0 10px 13px rgba(26, 64, 20, 0.07);
 }
 
 @utility no-scrollbar {
@@ -166,5 +167,61 @@ body {
   }
   to {
     background-position: 200% 0;
+  }
+}
+
+/* Evo orb idle motion — compositor-only (transform/opacity). */
+@keyframes evo-orb-scale {
+  50% {
+    transform: scale(var(--orb-scale, 1.015));
+  }
+}
+@keyframes evo-orb-think {
+  50% {
+    transform: scale(1.04);
+    opacity: 0.85;
+  }
+}
+.evo-orb-idle {
+  --orb-scale: 1.015;
+  animation: evo-orb-scale 6s ease-in-out infinite;
+}
+.evo-orb-breathe {
+  --orb-scale: 1.03;
+  animation: evo-orb-scale 6s ease-in-out infinite;
+}
+.evo-orb-think {
+  animation: evo-orb-think 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .evo-orb-idle,
+  .evo-orb-breathe,
+  .evo-orb-think {
+    animation: none;
+  }
+}
+
+/* Page entry (was a JS spring; CSS keeps SSR content visible before hydration). */
+@keyframes evo-enter {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes evo-enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+.evo-enter {
+  animation: evo-enter 340ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+}
+.evo-enter-fade {
+  animation: evo-enter-fade 180ms cubic-bezier(0.2, 0, 0, 1) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .evo-enter,
+  .evo-enter-fade {
+    animation: none;
   }
 }

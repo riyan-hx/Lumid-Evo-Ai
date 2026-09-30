@@ -148,7 +148,7 @@ export default function MemoryScreen() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={spring.snappy}
-            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[345px] items-center justify-between rounded-2xl bg-forest px-4 py-3 text-white shadow-[0_14px_28px_-10px_rgba(20,26,18,0.4)]"
+            className="fixed inset-x-0 bottom-6 z-40 mx-auto flex w-[min(345px,calc(100%-32px))] items-center justify-between rounded-2xl bg-forest px-4 py-3 text-white shadow-[0_14px_28px_-10px_rgba(20,26,18,0.4)]"
             role="status"
           >
             <span className="type-body-s">Forgotten.</span>

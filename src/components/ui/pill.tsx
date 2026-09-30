@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { ease, haptic, spring } from "@/lib/motion";
 import { Icon, type IconName } from "./icons";
@@ -30,19 +30,19 @@ const skins: Record<Variant, { bg: string; text: string; inset: string; shadow: 
     bg: "var(--gradient-forest)",
     text: "text-white",
     inset: "inset 0 1px 0 rgba(255,255,255,0.14)",
-    shadow: "drop-shadow(0 14px 14px rgba(20,26,18,0.28))",
+    shadow: "0 14px 14px rgba(20,26,18,0.28)",
   },
   lime: {
     bg: "var(--gradient-lime)",
     text: "text-forest",
     inset: "inset 0 1px 0 rgba(255,255,255,0.45)",
-    shadow: "drop-shadow(0 14px 14px rgba(97,191,59,0.4))",
+    shadow: "0 14px 14px rgba(97,191,59,0.4)",
   },
   glass: {
     bg: "rgba(255,255,255,0.72)",
     text: "text-ink",
     inset: "none",
-    shadow: "drop-shadow(0 8px 12px rgba(26,51,20,0.08))",
+    shadow: "0 8px 12px rgba(26,51,20,0.08)",
   },
 };
 
@@ -63,13 +63,18 @@ export function Pill({
   const [done, setDone] = useState(false);
   const skin = skins[variant];
 
+  // Warm the next route so the tap feels instant.
+  useEffect(() => {
+    if (href) router.prefetch(href);
+  }, [href, router]);
+
   const handle = () => {
     if (disabled || done) return;
     onClick?.();
     if (confirm) {
       haptic("light");
       setDone(true);
-      setTimeout(() => href && router.push(href), 400);
+      setTimeout(() => href && router.push(href), 260);
     } else if (href) {
       router.push(href);
     }
@@ -80,7 +85,7 @@ export function Pill({
       type={type}
       disabled={disabled}
       onClick={handle}
-      whileTap={disabled ? undefined : { scale: 0.97, filter: `${skin.shadow} brightness(0.96)` }}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
       transition={spring.snappy}
       className={cn(
         "relative flex shrink-0 cursor-pointer items-center justify-center gap-2.5 rounded-full px-7 type-label-m whitespace-nowrap transition-opacity duration-200 disabled:cursor-default",
@@ -89,7 +94,7 @@ export function Pill({
         disabled && "opacity-35",
         className,
       )}
-      style={{ height, background: skin.bg, boxShadow: skin.inset, filter: skin.shadow, ...style }}
+      style={{ height, background: skin.bg, boxShadow: skin.inset === "none" ? skin.shadow : `${skin.inset}, ${skin.shadow}`, ...style }}
     >
       <AnimatePresence mode="popLayout" initial={false}>
         {done ? (
