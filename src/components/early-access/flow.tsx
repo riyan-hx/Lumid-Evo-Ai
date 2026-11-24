@@ -1,16 +1,23 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PosterBackground } from "@/components/launch/poster";
-import { isEmail, normalizeEmail, type ExcuseId, type Signup } from "@/lib/early-access/content";
+import { excuses, isEmail, normalizeEmail, type ExcuseId, type Signup } from "@/lib/early-access/content";
 import { INTRO_KEY, captureAttribution, hasRef, postSignup, store, track } from "@/lib/early-access/client";
+import { lockScroll, scrollByAmount, scrollToElement } from "@/lib/early-access/scroll";
+import { cn } from "@/lib/cn";
 import { EASE_OUT } from "@/lib/motion";
 import { Footer, Header } from "./chrome";
 import { EmailField, type FieldStatus } from "./email-field";
+import { EvoSheet, useIsDesk } from "./evo-reply";
 import { IntroLoader } from "./intro-loader";
+import { LightBackdrop } from "./light-backdrop";
 import { PickView } from "./pick-view";
-import { SuccessView } from "./success-view";
+
+// Step C is only needed after a signup — keep it out of the first load and warm it up on first typing.
+const loadSuccess = () => import("./success-view").then((m) => m.SuccessView);
+const SuccessView = dynamic(loadSuccess);
 
 type HistoryState = { step: "a" | "b" | "c"; excuse?: ExcuseId };
 type View = "pick" | "success";
@@ -19,34 +26,50 @@ type Loader = "pending" | "running" | "done";
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /**
- * The whole early-access page (handoff §1). Loader overlay → A pick a line → B Evo answers (same view,
- * a line is selected) → C confirm & pass. Steps are client state mirrored to history (`?step=`) so Back works.
- * Pass `confirmed` on the email-link landing page to start on C with “You’re in.”.
+ * The whole early-access page (handoff §1, light design). Loader overlay → A pick a line → B Evo answers
+ * (bottom sheet on phones, popover on desktop) → C. Steps are client state mirrored to history (`?step=`).
+ * Pass `confirmed` on the email-link landing page to start on C with “You’re in, for real.”.
  */
 export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
   const reduced = useReducedMotion();
+  const desk = useIsDesk();
   const [loader, setLoader] = useState<Loader>(confirmed ? "done" : "pending");
   const [revealed, setRevealed] = useState(!!confirmed);
   const [view, setView] = useState<View>(confirmed ? "success" : "pick");
   const [excuse, setExcuse] = useState<ExcuseId | null>(null);
+  const [saved, setSaved] = useState(false); // Evo’s step was handed to the email field
+  const [pulse, setPulse] = useState(0);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<FieldStatus>("idle");
   const [signup, setSignup] = useState<Signup | null>(confirmed ?? null);
   const signupRef = useRef(signup);
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const sheetEl = useRef<HTMLDivElement | null>(null);
+
+  const choice = excuses.find((e) => e.id === excuse) ?? null;
+  const sheetOpen = !desk && !!choice && !saved && view === "pick";
+  const locked = loader !== "done";
 
   // First paint is server-rendered (loader overlay over step A); decide here whether to play the intro.
   useEffect(() => {
     captureAttribution();
     if (confirmed) return;
     history.replaceState({ step: "a" } satisfies HistoryState, "");
-    // sessionStorage is only readable after mount, so the intro decision is made here.
     const seen = !!store.get(INTRO_KEY);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from sessionStorage
     setLoader(seen ? "done" : "running");
     if (seen) setRevealed(true);
   }, [confirmed]);
+
+  // No scrolling behind the loader or an open sheet.
+  useEffect(() => (locked ? lockScroll() : undefined), [locked]);
+  useEffect(() => (sheetOpen ? lockScroll() : undefined), [sheetOpen]);
+
+  // Warm up step C as soon as there’s something to submit.
+  useEffect(() => {
+    if (email) void loadSuccess();
+  }, [email]);
 
   // Browser Back / Forward between steps.
   useEffect(() => {
@@ -55,6 +78,7 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
       if (st?.step === "c" && signupRef.current) setView("success");
       else {
         setView("pick");
+        setSaved(false);
         setExcuse(st?.step === "b" ? (st.excuse ?? null) : null);
         requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
       }
@@ -63,6 +87,20 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // Phone sheet: scroll the page so the picked line sits just above it (smoothly), like the design.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const id = requestAnimationFrame(() => {
+      const bubble = document.querySelector<HTMLElement>('[aria-pressed="true"]');
+      const sheet = sheetEl.current;
+      if (!bubble || !sheet) return;
+      const gap = 24;
+      const delta = bubble.getBoundingClientRect().bottom - (window.innerHeight - sheet.offsetHeight - gap);
+      scrollByAmount(delta);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [sheetOpen, excuse]);
+
   const url = (step: string) => {
     const q = new URLSearchParams(window.location.search);
     q.set("step", step);
@@ -70,13 +108,30 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
   };
 
   const select = (id: ExcuseId) => {
-    track("line_selected", { excuse_id: id, order: ["lunch", "video", "fail", "much", "tomorrow"].indexOf(id) + 1 });
+    track("line_selected", { excuse_id: id, order: excuses.findIndex((e) => e.id === id) + 1 });
     const st: HistoryState = { step: "b", excuse: id };
     if (excuse) history.replaceState(st, "", url("b"));
     else history.pushState(st, "", url("b"));
+    setSaved(false);
     setExcuse(id);
   };
-  const deselect = () => (history.state?.step === "b" ? history.back() : setExcuse(null));
+  const deselect = useCallback(() => {
+    setSaved(false);
+    if (history.state?.step === "b") history.back();
+    else setExcuse(null);
+  }, []);
+
+  /** “Save this step · join early access”: hand off to the email field. */
+  const useStep = useCallback(() => {
+    setSaved(true);
+    setPulse((p) => p + 1);
+    requestAnimationFrame(() =>
+      scrollToElement(document.getElementById("ea-email-field"), -160, () => {
+        inputRef.current?.focus({ preventScroll: true });
+        setPulse((p) => p + 1);
+      }),
+    );
+  }, []);
 
   const goSuccess = useCallback((data: Signup) => {
     signupRef.current = data;
@@ -121,7 +176,6 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
     requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
   }, []);
   const onDone = useCallback(() => setLoader("done"), []);
-  const locked = loader !== "done";
 
   const form = (
     <EmailField
@@ -133,44 +187,49 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
       onSubmit={submit}
       status={status}
       inputRef={inputRef}
-      align="center"
+      attached={saved && choice ? `${choice.step.slice(0, choice.step.indexOf("."))}…` : null}
+      pulse={pulse}
     />
   );
 
   return (
-    <div className="relative isolate min-h-dvh overflow-x-clip bg-[#0b0d0a] text-white">
+    <div className="relative isolate min-h-dvh overflow-x-clip bg-paper text-t1">
       <noscript>
         <style>{`.ea-loader{display:none!important}.ea-stage{opacity:1!important;transform:none!important}`}</style>
       </noscript>
-      <PosterBackground tone="night" />
+      <LightBackdrop />
 
       <motion.div
-        className="ea-stage relative z-10 mx-auto flex min-h-dvh w-full max-w-[560px] flex-col px-5 pt-10 pb-8 desk:max-w-[1200px] desk:px-0 desk:pb-10"
+        className={cn("ea-stage relative z-10 mx-auto flex min-h-dvh w-full max-w-[560px] flex-col px-5 pb-8 desk:max-w-[1200px] desk:px-0 desk:pb-10", sheetOpen && "ea-sheet-open")}
         initial={false}
         animate={{ opacity: revealed ? 1 : 0, y: revealed ? 0 : 8 }}
-        transition={{ duration: reduced ? 0.2 : 0.4, ease: EASE_OUT }}
-        inert={locked}
+        transition={{ duration: reduced ? 0.2 : 0.5, ease: EASE_OUT }}
+        inert={locked || sheetOpen}
       >
-        <Header right={view === "success" ? (signup?.status === "confirmed" || confirmed ? "You’re on the list" : "One last step") : "For students, exam aspirants & young pros"} tagOnMobile={view === "success"} />
-        <main className="flex flex-1 flex-col justify-center py-8 desk:py-6">
+        <Header right={view === "success" ? "You’re on the list" : "For students, exam aspirants & young pros"} />
+        <main className="flex flex-1 flex-col justify-start py-6 desk:justify-center desk:py-4">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={view}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: EASE_OUT }}
+              initial={{ opacity: 0, scale: 0.98, filter: "blur(6px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.98, filter: "blur(6px)" }}
+              transition={{ duration: 0.28, ease: EASE_OUT }}
             >
               {view === "pick" || !signup ? (
-                <PickView excuseId={excuse} onSelect={select} onDeselect={deselect} headingRef={headingRef} form={form} />
+                <PickView excuseId={excuse} revealed={revealed} answerOpen={!saved} onSelect={select} onDeselect={deselect} onUse={useStep} headingRef={headingRef} form={form} />
               ) : (
-                <SuccessView signup={signup} email={email || undefined} confirmed={signup.status === "confirmed"} />
+                <SuccessView signup={signup} email={email || undefined} confirmed={signup.status === "confirmed"} excuseId={excuse} />
               )}
             </motion.div>
           </AnimatePresence>
         </main>
-        <Footer />
+        <div className="ea-dimmable">
+          <Footer />
+        </div>
       </motion.div>
+
+      <AnimatePresence>{sheetOpen && choice && <EvoSheet key="sheet" choice={choice} onClose={deselect} onUse={useStep} onAnother={deselect} sheetRef={(el) => (sheetEl.current = el)} />}</AnimatePresence>
 
       {loader !== "done" && <IntroLoader run={loader === "running"} onReveal={onReveal} onDone={onDone} />}
     </div>

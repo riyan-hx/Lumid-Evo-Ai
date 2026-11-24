@@ -65,7 +65,7 @@
   --breakpoint-desk: 75rem; /* 1200px — early-access desktop layout */
 
   --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-sans: "Helvetica Now Display", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Helvetica Now Display", "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --ease-out-evo: cubic-bezier(0.2, 0, 0, 1);
 }
@@ -132,6 +132,31 @@
   border: 1px solid #fff;
   /* box-shadow, not filter: Safari drops backdrop-filter (and can blank the content) when both are on one element. */
   box-shadow: 0 10px 13px rgba(26, 64, 20, 0.07);
+}
+
+/* Early-access smooth scroll (Lenis) and scroll lock while the loader / sheet is open. */
+html.ea-locked {
+  overflow: hidden;
+}
+/* Phone sheet open: everything except the picked line recedes. */
+.ea-dimmable {
+  transition:
+    opacity 0.3s var(--ease-out-evo),
+    filter 0.3s var(--ease-out-evo);
+}
+.ea-sheet-open .ea-dimmable {
+  opacity: 0.3;
+  filter: blur(2px);
+}
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 @utility no-scrollbar {

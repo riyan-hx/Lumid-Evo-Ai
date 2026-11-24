@@ -202,10 +202,12 @@ Accessibility:
 | Copy, excuses, validation, waves | `src/lib/early-access/content.ts` |
 | Client API, analytics `track()`, session storage | `src/lib/early-access/client.ts` (analytics pushes to `window.dataLayer`) |
 | Flow state, history (`?step=`), submit | `src/components/early-access/flow.tsx` |
+| Light design (Figma `192:73126`): backdrop · sheet/popover · email field | `light-backdrop.tsx` · `evo-reply.tsx` · `email-field.tsx` |
+| Smooth scroll (Lenis), scroll lock | `src/lib/early-access/scroll.ts`, `smooth-scroll.tsx` |
 | Intro loader (timeline from §2) | `src/components/early-access/intro-loader.tsx` |
-| A/B view · C view · pass card · email field | `pick-view.tsx` · `success-view.tsx` · `evo-pass.tsx` · `email-field.tsx` |
+| A/B view · C view | `pick-view.tsx` · `success-view.tsx` |
 | Easing tokens | `src/lib/motion.ts` (`EASE_OUT`, `EASE_IN_OUT_SOFT`, `EASE_BLOOM`) |
 | Desktop breakpoint | `--breakpoint-desk: 75rem` in `globals.css` (`desk:` variant, ≥ 1200 px) |
 
 Skip keys implemented: pointer, Space, Enter, Esc (Tab is deliberately not a skip key so keyboard users can reach the Skip button).
-Fonts: Instrument Serif Italic is not bundled — add `/public/fonts` + `@font-face` (the token `--font-serif` already lists it first); until then it falls back to Georgia.
+Fonts: Instrument Serif Italic and Inter are bundled via `@fontsource`. Helvetica Now Display is licensed — drop the files in `/public/fonts` to use it (Inter is the fallback).
