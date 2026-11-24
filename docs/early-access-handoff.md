@@ -6,7 +6,7 @@ This file is the behavioural source of truth.
 
 - Stack: Next.js 16 · React 19 · Tailwind 4 · `motion` 13
 - Route: `/early-access` — one page, steps are client state (`?step=a|b|c` for back-button support)
-- Existing prototype code: `src/app/(launch)/early-access/*`, `src/components/launch/*`
+- Implemented — see **Implementation map** at the end of this file.
 
 ## 1. Flow
 
@@ -191,3 +191,21 @@ Accessibility:
 - Tab order: Skip intro → lines → email → submit; focus ring `#3F8F22` 2 px.
 - Orb, rays and tags `aria-hidden`; reply card and toast are polite live regions.
 - Disclaimer visible on every step: "Evo is a support tool, not therapy or a diagnosis. In a crisis, contact a professional or helpline."
+
+## 8. Implementation map
+
+| Concern | File |
+|---|---|
+| Page + confirm landing | `src/app/(launch)/early-access/page.tsx`, `confirmed/page.tsx` |
+| API | `src/app/api/early-access/route.ts` (POST), `confirm/route.ts` (GET → 302) |
+| Server rules + in-memory store | `src/lib/early-access/server.ts` — **swap `db` for a real table; log line stands in for the confirm email** |
+| Copy, excuses, validation, waves | `src/lib/early-access/content.ts` |
+| Client API, analytics `track()`, session storage | `src/lib/early-access/client.ts` (analytics pushes to `window.dataLayer`) |
+| Flow state, history (`?step=`), submit | `src/components/early-access/flow.tsx` |
+| Intro loader (timeline from §2) | `src/components/early-access/intro-loader.tsx` |
+| A/B view · C view · pass card · email field | `pick-view.tsx` · `success-view.tsx` · `evo-pass.tsx` · `email-field.tsx` |
+| Easing tokens | `src/lib/motion.ts` (`EASE_OUT`, `EASE_IN_OUT_SOFT`, `EASE_BLOOM`) |
+| Desktop breakpoint | `--breakpoint-desk: 75rem` in `globals.css` (`desk:` variant, ≥ 1200 px) |
+
+Skip keys implemented: pointer, Space, Enter, Esc (Tab is deliberately not a skip key so keyboard users can reach the Skip button).
+Fonts: Instrument Serif Italic is not bundled — add `/public/fonts` + `@font-face` (the token `--font-serif` already lists it first); until then it falls back to Georgia.

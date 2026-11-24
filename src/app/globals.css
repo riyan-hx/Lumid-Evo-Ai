@@ -62,6 +62,9 @@
   --color-blush-subtle: #fff1f4;
   --color-blush-text: #b42850;
 
+  --breakpoint-desk: 75rem; /* 1200px — early-access desktop layout */
+
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --font-sans: "Helvetica Now Display", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --ease-out-evo: cubic-bezier(0.2, 0, 0, 1);

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { EarlyAccessFlow } from "@/components/early-access/flow";
 
 export default function EarlyAccess() {
-  redirect("/early-access/stuck");
+  return <EarlyAccessFlow />;
 }

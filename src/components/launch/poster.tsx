@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Orb } from "@/components/ui/orb";
@@ -147,55 +145,3 @@ export function Disclaimer({ tone, className }: { tone: Tone; className?: string
     </p>
   );
 }
-
-export function Handle({ tone, className }: { tone: Tone; className?: string }) {
-  return (
-    <p className={cn("font-mono text-[10px] tracking-[0.14em] uppercase", tone === "night" ? "text-white/40" : "text-t3", className)}>
-      @lumid.ai · evo.lumidai.in
-    </p>
-  );
-}
-
-const variants = [
-  { href: "/early-access/stuck", n: "01", label: "Sound familiar" },
-  { href: "/early-access/pass", n: "02", label: "Evo Pass" },
-  { href: "/early-access/note", n: "03", label: "Note to you" },
-  { href: "/early-access/breathe", n: "04", label: "One breath" },
-];
-
-/** Review-only switcher between the four variations, styled like the carousel navigator. */
-export function VariantNav({ tone }: { tone: Tone }) {
-  const path = usePathname();
-  const i = variants.findIndex((v) => v.href === path);
-  const night = tone === "night";
-  return (
-    <nav
-      aria-label="Early access variations"
-      className={cn(
-        "fixed right-4 bottom-[max(env(safe-area-inset-bottom),14px)] z-50 flex items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4 backdrop-blur-[12px]",
-        night ? "border border-white/12 bg-black/55 text-white" : "border border-white bg-white/80 text-forest shadow-[0_10px_20px_rgba(26,64,20,0.1)]",
-      )}
-    >
-      <span className="font-mono text-[11px] tracking-[0.1em]">{variants[i]?.n ?? "00"} / 04</span>
-      <span className="flex gap-1">
-        {variants.map((v, j) => (
-          <Link
-            key={v.href}
-            href={v.href}
-            aria-label={`Variation ${v.n}: ${v.label}`}
-            aria-current={j === i ? "page" : undefined}
-            className={cn("h-[3px] rounded-full transition-all duration-200", j === i ? "w-6 bg-lime" : night ? "w-3 bg-white/25" : "w-3 bg-forest/20")}
-          />
-        ))}
-      </span>
-      <Link
-        href={variants[(i + 1) % variants.length].href}
-        className={cn("flex h-8 items-center rounded-full px-3 type-label-s", night ? "bg-white text-ink" : "bg-forest text-white")}
-      >
-        Next →
-      </Link>
-    </nav>
-  );
-}
-
-export { variants as launchVariants };

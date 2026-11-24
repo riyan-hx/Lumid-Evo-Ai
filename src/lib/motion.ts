@@ -12,6 +12,11 @@ export const ease = {
   out: { duration: 0.24, ease: [0.2, 0, 0, 1] },
 } satisfies Record<string, Transition>;
 
+/** Early-access easing tokens (handoff §7). Same cubic-bezier as `--ease-out-evo`. */
+export const EASE_OUT = [0.2, 0, 0, 1] as const;
+export const EASE_IN_OUT_SOFT = [0.65, 0, 0.35, 1] as const;
+export const EASE_BLOOM = [0.7, 0, 0.84, 0] as const;
+
 export const STAGGER = 0.04;
 
 /** 4 s in · 2 s hold · 6 s out */
