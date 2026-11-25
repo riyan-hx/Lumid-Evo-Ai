@@ -32,6 +32,8 @@ A tab "Registrations" is created automatically; rows turn from `pending` to `con
 The Sheet is a live view — Supabase stays the source of truth, and a Sheet outage never blocks a signup.
 
 ## 4 · Go live on evo.lumidai.in
+`src/proxy.ts` makes that host early-access only: `/` serves the page, other app routes redirect to `/`; localhost and *.vercel.app keep the full app.
+
 1. Vercel → Project → Settings → Domains → add `evo.lumidai.in`; at GoDaddy (DNS for lumidai.in) add the CNAME Vercel shows (`evo` → `cname.vercel-dns.com`).
 2. Settings → Environment Variables → add the vars above for **Production** (and Preview if you want previews to accept signups) → redeploy.
 3. Deploy the branch to Production (merge to `main`, or promote the deployment).
