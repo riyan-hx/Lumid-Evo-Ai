@@ -41,7 +41,7 @@ export type SignupOutcome = { status: 201 | 200 | 422 | 429 | 503; body: Signup 
 export async function signup(input: SignupInput, ip: string, origin: string): Promise<SignupOutcome> {
   const store = getStore();
   if (store.kind === "memory" && !memoryAllowed()) {
-    console.error("[early-access] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set — refusing to store signups in memory in production");
+    console.error("[early-access] no storage configured (SUPABASE_* or BLOB_READ_WRITE_TOKEN) — refusing to store signups in memory in production");
     return { status: 503, body: { error: "storage_not_configured" } };
   }
 

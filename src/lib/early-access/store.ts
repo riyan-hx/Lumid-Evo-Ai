@@ -1,9 +1,11 @@
 import "server-only";
+import { BlobPreconditionFailedError, get, put } from "@vercel/blob";
 import type { ExcuseId } from "./content";
 
 /**
  * Persistence for early-access registrations.
  *  - Supabase (REST, no SDK) when SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set — use this in production.
+ *  - Vercel Blob (one private JSON doc, optimistic concurrency via ETag) when BLOB_READ_WRITE_TOKEN is set.
  *  - In-memory otherwise (local dev only; resets on restart and isn't shared across serverless instances).
  */
 
@@ -23,7 +25,7 @@ export type Row = {
 export type NewRow = Omit<Row, "spot" | "confirmed" | "invites">;
 
 export interface Store {
-  readonly kind: "supabase" | "memory";
+  readonly kind: "supabase" | "blob" | "memory";
   /** Insert; resolves `{ created: false, row }` with the existing row if the email is already registered. */
   create(row: NewRow): Promise<{ created: boolean; row: Row }>;
   byCode(code: string): Promise<Row | null>;
@@ -140,10 +142,70 @@ function supabase(url: string, key: string): Store {
   };
 }
 
+/* ---------------- Vercel Blob ---------------- */
+
+const BLOB_PATH = "early-access/registrations.json";
+type Doc = { next: number; rows: Row[] };
+
+function blobStore(): Store {
+  const read = async (): Promise<{ doc: Doc; etag?: string }> => {
+    const res = await get(BLOB_PATH, { access: "private", useCache: false });
+    if (!res || res.statusCode !== 200) return { doc: { next: 1537, rows: [] } };
+    return { doc: JSON.parse(await new Response(res.stream).text()) as Doc, etag: res.blob.etag };
+  };
+  const write = (doc: Doc, etag?: string) =>
+    put(BLOB_PATH, JSON.stringify(doc), { access: "private", contentType: "application/json", allowOverwrite: true, addRandomSuffix: false, ...(etag ? { ifMatch: etag } : {}) });
+
+  /** Read-modify-write; retries when another request wrote in between. `fn` returns undefined to skip the write. */
+  const mutate = async <T>(fn: (doc: Doc) => { result: T; dirty: boolean }): Promise<T> => {
+    for (let i = 0; i < 6; i++) {
+      const { doc, etag } = await read();
+      const { result, dirty } = fn(doc);
+      if (!dirty) return result;
+      try {
+        await write(doc, etag);
+        return result;
+      } catch (e) {
+        if (!(e instanceof BlobPreconditionFailedError)) throw e;
+      }
+    }
+    throw new Error("blob write contention");
+  };
+
+  return {
+    kind: "blob",
+    create: (n) =>
+      mutate<{ created: boolean; row: Row }>((doc) => {
+        const existing = doc.rows.find((r) => r.email.toLowerCase() === n.email.toLowerCase());
+        if (existing) return { result: { created: false, row: existing }, dirty: false };
+        const row: Row = { ...n, spot: doc.next++, confirmed: false, invites: 0 };
+        doc.rows.push(row);
+        return { result: { created: true, row }, dirty: true };
+      }),
+    async byCode(code) {
+      return (await read()).doc.rows.find((r) => r.code === code) ?? null;
+    },
+    confirm: (token) =>
+      mutate((doc) => {
+        const r = doc.rows.find((x) => x.token === token);
+        if (!r) return { result: null, dirty: false };
+        if (r.confirmed) return { result: r.code, dirty: false };
+        r.confirmed = true;
+        const ref = r.ref ? doc.rows.find((x) => x.code === r.ref) : undefined;
+        if (ref) ref.invites += 1;
+        return { result: r.code, dirty: true };
+      }),
+    async ping() {
+      await read();
+    },
+  };
+}
+
 export function getStore(): Store {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (url && key) return supabase(url, key);
+  if (process.env.BLOB_READ_WRITE_TOKEN) return blobStore();
   return memoryStore;
 }
 

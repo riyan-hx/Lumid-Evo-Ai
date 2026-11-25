@@ -13,17 +13,17 @@ export async function GET() {
     db = "error";
   }
   const { sheet, email } = config();
-  const storageReady = store.kind === "supabase" ? db === "ok" : memoryAllowed();
+  const storageReady = store.kind !== "memory" ? db === "ok" : memoryAllowed();
   return Response.json(
     {
       ok: storageReady,
       storage: store.kind,
       db,
-      persistent: store.kind === "supabase",
+      persistent: store.kind !== "memory",
       sheet_mirror: sheet,
       confirm_email: email ? "resend" : sheet ? "apps-script (if SEND_CONFIRM_EMAIL=true)" : "log only",
       warnings: [
-        ...(store.kind === "memory" ? ["Using in-memory storage — registrations are lost on restart. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY."] : []),
+        ...(store.kind === "memory" ? ["Using in-memory storage — registrations are lost on restart. Set BLOB_READ_WRITE_TOKEN or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY."] : []),
         ...(!email && !sheet ? ["No email sender configured — people cannot confirm. Set RESEND_API_KEY + EMAIL_FROM, or enable the Apps Script mailer."] : []),
       ],
     },
