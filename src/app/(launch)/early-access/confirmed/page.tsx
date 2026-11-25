@@ -10,7 +10,7 @@ export default async function Confirmed({ searchParams }: PageProps<"/early-acce
   const { code } = await searchParams;
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
-  const signup = typeof code === "string" ? findByCode(code, origin) : null;
+  const signup = typeof code === "string" ? await findByCode(code, origin).catch(() => null) : null;
   if (!signup) redirect("/early-access");
   return <EarlyAccessFlow confirmed={signup} />;
 }

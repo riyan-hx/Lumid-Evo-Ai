@@ -200,7 +200,8 @@ Accessibility:
 |---|---|
 | Page + confirm landing | `src/app/(launch)/early-access/page.tsx`, `confirmed/page.tsx` |
 | API | `src/app/api/early-access/route.ts` (POST), `confirm/route.ts` (GET → 302) |
-| Server rules + in-memory store | `src/lib/early-access/server.ts` — **swap `db` for a real table; log line stands in for the confirm email** |
+| Server rules (validation, rate limits, double opt-in) | `src/lib/early-access/server.ts` |
+| Storage (Supabase / in-memory dev) · Sheet mirror · confirm email | `store.ts` · `notify.ts` · see `docs/early-access-setup.md` |
 | Copy, excuses, validation, waves | `src/lib/early-access/content.ts` |
 | Client API, analytics `track()`, session storage | `src/lib/early-access/client.ts` (analytics pushes to `window.dataLayer`) |
 | Flow state, history (`?step=`), submit | `src/components/early-access/flow.tsx` |

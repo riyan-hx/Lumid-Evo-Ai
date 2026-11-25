@@ -1,56 +1,31 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { REF_RE, isEmail, isExcuseId, normalizeEmail, waveFor, type ExcuseId, type Signup } from "./content";
+import { after } from "next/server";
+import { REF_RE, isEmail, isExcuseId, normalizeEmail, waveFor, type Signup } from "./content";
+import { mirrorToSheet, sendConfirmEmail } from "./notify";
+import { getStore, memoryAllowed, type Row } from "./store";
 
-/**
- * Early-access store + rules (handoff §5).
- * In-memory so the flow works end to end locally; it resets on restart and isn't shared across
- * serverless instances. Swap `db` for a real table (same shape) when the backend exists.
- */
+/** Early-access rules (handoff §5): validation, rate limits, double opt-in, wave credit. */
 
-type Record_ = {
-  email: string;
-  spot: number;
-  code: string;
-  token: string;
-  confirmed: boolean;
-  invites: number;
-  excuseId: ExcuseId | null;
-  ref: string | null;
-  utm: { source?: string; campaign?: string };
-  consentVersion: string;
-  createdAt: number;
-};
-
-type Db = { byEmail: Map<string, Record_>; byCode: Map<string, Record_>; byToken: Map<string, Record_>; next: number; hits: Map<string, number[]> };
-
-const g = globalThis as unknown as { __evoEarlyAccess?: Db };
-const db: Db = (g.__evoEarlyAccess ??= { byEmail: new Map(), byCode: new Map(), byToken: new Map(), next: 1537, hits: new Map() });
-
+type Hits = Map<string, number[]>;
+const g = globalThis as unknown as { __evoHits?: Hits };
+const hits: Hits = (g.__evoHits ??= new Map());
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
 
-/** Sliding window: true when over the limit (otherwise records the hit). */
+/** Sliding window (per server instance): true when over the limit, otherwise records the hit. */
 function limited(key: string, max: number, windowMs: number) {
   const now = Date.now();
-  const hits = (db.hits.get(key) ?? []).filter((t) => now - t < windowMs);
-  if (hits.length >= max) {
-    db.hits.set(key, hits);
-    return true;
-  }
-  hits.push(now);
-  db.hits.set(key, hits);
-  return false;
+  const list = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
+  const over = list.length >= max;
+  if (!over) list.push(now);
+  hits.set(key, list);
+  return over;
 }
 
-const newCode = () => {
-  for (;;) {
-    const code = `EVO-${randomBytes(3).toString("hex").slice(0, 4).toUpperCase()}`;
-    if (!db.byCode.has(code)) return code;
-  }
-};
+const newCode = () => `EVO-${randomBytes(3).toString("hex").slice(0, 4).toUpperCase()}`;
 
-const view = (r: Record_, origin: string, already?: boolean): Signup => ({
+const view = (r: Row, origin: string, already?: boolean): Signup => ({
   status: r.confirmed ? "confirmed" : "pending_confirmation",
   spot: r.spot,
   wave: waveFor(r.invites),
@@ -60,61 +35,60 @@ const view = (r: Record_, origin: string, already?: boolean): Signup => ({
   ...(already ? { already: true } : {}),
 });
 
-/** Stand-in for the mailer: log the confirm link. Replace with the real provider. */
-function sendConfirmEmail(r: Record_, origin: string) {
-  console.info(`[early-access] confirm ${r.email}: ${origin}/api/early-access/confirm?token=${r.token}`);
-}
-
 export type SignupInput = { email?: unknown; excuse_id?: unknown; ref?: unknown; utm?: unknown; consent_version?: unknown };
-export type SignupOutcome = { status: 201 | 200 | 422 | 429; body: Signup | { error: string } };
+export type SignupOutcome = { status: 201 | 200 | 422 | 429 | 503; body: Signup | { error: string } };
 
-export function signup(input: SignupInput, ip: string, origin: string): SignupOutcome {
+export async function signup(input: SignupInput, ip: string, origin: string): Promise<SignupOutcome> {
+  const store = getStore();
+  if (store.kind === "memory" && !memoryAllowed()) {
+    console.error("[early-access] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set — refusing to store signups in memory in production");
+    return { status: 503, body: { error: "storage_not_configured" } };
+  }
+
   const email = typeof input.email === "string" ? normalizeEmail(input.email) : "";
   if (!isEmail(email)) return { status: 422, body: { error: "invalid_email" } };
   // 5 submits / IP / 10 min · 3 / email / day
   if (limited(`ip:${ip}`, 5, 10 * MIN) || limited(`email:${email}`, 3, DAY)) return { status: 429, body: { error: "rate_limited" } };
 
-  const existing = db.byEmail.get(email);
-  if (existing) {
-    sendConfirmEmail(existing, origin);
-    return { status: 200, body: view(existing, origin, true) };
-  }
-
-  const ref = typeof input.ref === "string" && REF_RE.test(input.ref) ? input.ref : null;
   const utm = (input.utm && typeof input.utm === "object" ? input.utm : {}) as Record<string, unknown>;
-  const r: Record_ = {
-    email,
-    spot: db.next++,
-    code: newCode(),
-    token: randomBytes(16).toString("base64url"),
-    confirmed: false,
-    invites: 0,
-    excuseId: isExcuseId(input.excuse_id) ? input.excuse_id : null,
-    ref: ref && db.byCode.has(ref) ? ref : null,
-    utm: { source: typeof utm.source === "string" ? utm.source.slice(0, 64) : undefined, campaign: typeof utm.campaign === "string" ? utm.campaign.slice(0, 64) : undefined },
-    consentVersion: typeof input.consent_version === "string" ? input.consent_version.slice(0, 16) : "",
-    createdAt: Date.now(),
-  };
-  db.byEmail.set(email, r);
-  db.byCode.set(r.code, r);
-  db.byToken.set(r.token, r);
-  sendConfirmEmail(r, origin);
-  return { status: 201, body: view(r, origin) };
-}
+  const str = (v: unknown, n: number) => (typeof v === "string" && v ? v.slice(0, n) : undefined);
+  const ref = typeof input.ref === "string" && REF_RE.test(input.ref) ? input.ref : null;
 
-/** Confirm by email token. A referrer is credited only now, once their friend has confirmed. */
-export function confirm(token: string): string | null {
-  const r = db.byToken.get(token);
-  if (!r) return null;
-  if (!r.confirmed) {
-    r.confirmed = true;
-    const referrer = r.ref ? db.byCode.get(r.ref) : undefined;
-    if (referrer) referrer.invites += 1;
+  try {
+    const { created, row } = await store.create({
+      email,
+      code: newCode(),
+      token: randomBytes(16).toString("base64url"),
+      excuseId: isExcuseId(input.excuse_id) ? input.excuse_id : null,
+      ref,
+      utm: { source: str(utm.source, 64), campaign: str(utm.campaign, 64) },
+      consentVersion: str(input.consent_version, 16) ?? "",
+    });
+    // Mirror + email after the response is sent (works on serverless via after()).
+    after(async () => {
+      if (created) await mirrorToSheet("signup", row, origin);
+      if (!row.confirmed) await sendConfirmEmail(row, origin);
+    });
+    return { status: created ? 201 : 200, body: view(row, origin, !created) };
+  } catch (e) {
+    console.error("[early-access] signup failed:", e instanceof Error ? e.message : e);
+    throw e; // route turns this into a 500 → the page shows “Couldn’t save just now”
   }
-  return r.code;
 }
 
-export function findByCode(code: string, origin: string): Signup | null {
-  const r = db.byCode.get(code);
+/** Confirm by email token. Returns the code to show on the confirmed page, or null for an unknown token. */
+export async function confirm(token: string, origin: string): Promise<string | null> {
+  if (!token || token.length > 64) return null;
+  const store = getStore();
+  const code = await store.confirm(token);
+  if (code) {
+    const row = await store.byCode(code);
+    if (row) after(() => mirrorToSheet("confirm", row, origin));
+  }
+  return code;
+}
+
+export async function findByCode(code: string, origin: string): Promise<Signup | null> {
+  const r = await getStore().byCode(code);
   return r?.confirmed ? view(r, origin) : null;
 }

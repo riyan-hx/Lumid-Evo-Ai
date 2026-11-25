@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { excuses, isEmail, normalizeEmail, type ExcuseId, type Signup } from "@/lib/early-access/content";
-import { captureAttribution, hasRef, postSignup, track } from "@/lib/early-access/client";
+import { captureAttribution, hasRef, postSignup, store, track } from "@/lib/early-access/client";
 import { lockScroll, scrollByAmount, scrollToElement } from "@/lib/early-access/scroll";
 import { cn } from "@/lib/cn";
 import { EASE_OUT } from "@/lib/motion";
@@ -44,12 +44,36 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
   const sheetEl = useRef<HTMLDivElement | null>(null);
   const restoreY = useRef<number | null>(null);
 
+  const url = (step: string) => {
+    const q = new URLSearchParams(window.location.search);
+    q.set("step", step);
+    return `?${q}`;
+  };
+
   const choice = excuses.find((e) => e.id === excuse) ?? null;
   const sheetOpen = !desk && !!choice && !saved && view === "pick";
 
+  // Keep the draft (email + picked line) for this session so Back from the success screen restores it
+  // even if the router remounts the page.
+  useEffect(() => {
+    try {
+      const d = JSON.parse(store.get("evo-draft") ?? "null") as { email?: string; excuse?: ExcuseId | null } | null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from sessionStorage
+      if (d?.email) setEmail(d.email);
+      if (d?.excuse && excuses.some((e) => e.id === d.excuse)) {
+        setExcuse(d.excuse);
+        setSaved(true); // keep the line attached; don't reopen the sheet
+      }
+    } catch {}
+  }, []);
+  useEffect(() => {
+    store.set("evo-draft", JSON.stringify({ email, excuse }));
+  }, [email, excuse]);
+
   useEffect(() => {
     captureAttribution();
-    if (!confirmed) history.replaceState({ step: "a" } satisfies HistoryState, "");
+    // Entry A carries `?step=a` so Back from C is a same-query transition (Next keeps the page mounted).
+    if (!confirmed) history.replaceState({ step: "a" } satisfies HistoryState, "", url("a"));
   }, [confirmed]);
 
   // No scrolling behind an open sheet.
@@ -90,12 +114,6 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
     });
     return () => cancelAnimationFrame(id);
   }, [sheetOpen, excuse]);
-
-  const url = (step: string) => {
-    const q = new URLSearchParams(window.location.search);
-    q.set("step", step);
-    return `?${q}`;
-  };
 
   const select = (id: ExcuseId) => {
     track("line_selected", { excuse_id: id, order: excuses.findIndex((e) => e.id === id) + 1 });
