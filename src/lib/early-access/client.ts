@@ -5,9 +5,6 @@ import type { ExcuseId, Signup } from "./content";
 /* ---------- Analytics (no PII — never pass the email) ---------- */
 
 type EventName =
-  | "intro_started"
-  | "intro_skipped"
-  | "intro_completed"
   | "line_selected"
   | "email_submitted"
   | "email_invalid"
@@ -44,7 +41,6 @@ export const store = {
   },
 };
 
-export const INTRO_KEY = "evo-intro-seen";
 const REF_KEY = "evo-ref";
 
 /** Keep `?ref=` (and UTMs) for the whole session so they survive step changes. */

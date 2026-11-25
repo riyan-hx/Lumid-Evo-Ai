@@ -1,5 +1,7 @@
 # Evo early access — developer handoff
 
+> **Update:** the dark intro loader (§2) was dropped from the build — the page opens directly on the light pick screen. §2 is kept for reference only; the `intro_*` analytics events are not emitted.
+
 Intro loader + email capture flow for `evo.lumidai.in`.
 Visual source of truth: Figma **Lumid AI Posts → ◆ Lumid Social Design System** (Row 00 Intro loader, Row 01 Email capture flow, board "EA · Developer handoff").
 This file is the behavioural source of truth.
@@ -204,7 +206,6 @@ Accessibility:
 | Flow state, history (`?step=`), submit | `src/components/early-access/flow.tsx` |
 | Light design (Figma `192:73126`): backdrop · sheet/popover · email field | `light-backdrop.tsx` · `evo-reply.tsx` · `email-field.tsx` |
 | Smooth scroll (Lenis), scroll lock | `src/lib/early-access/scroll.ts`, `smooth-scroll.tsx` |
-| Intro loader (timeline from §2) | `src/components/early-access/intro-loader.tsx` |
 | A/B view · C view | `pick-view.tsx` · `success-view.tsx` |
 | Easing tokens | `src/lib/motion.ts` (`EASE_OUT`, `EASE_IN_OUT_SOFT`, `EASE_BLOOM`) |
 | Desktop breakpoint | `--breakpoint-desk: 75rem` in `globals.css` (`desk:` variant, ≥ 1200 px) |

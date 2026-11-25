@@ -13,7 +13,6 @@ const STAGGER = ["", "desk:pl-0", "desk:pl-24", "desk:pl-8", "desk:pl-16"];
 
 type Props = {
   excuseId: ExcuseId | null;
-  revealed: boolean;
   onSelect: (id: ExcuseId) => void;
   onDeselect: () => void;
   /** Desktop popover visible (false once its CTA has been used). */
@@ -29,7 +28,7 @@ type Props = {
  * Steps A and B in one view. Phone: head → email → lines (the answer opens as a bottom sheet, rendered by the
  * flow). ≥1200 px: copy + email on the left, lines on the right with the answer as a popover on the clicked line.
  */
-export function PickView({ excuseId, revealed, answerOpen, onSelect, onDeselect, onUse, headingRef, form }: Props) {
+export function PickView({ excuseId, answerOpen, onSelect, onDeselect, onUse, headingRef, form }: Props) {
   const desk = useIsDesk();
   const choice = excuses.find((e) => e.id === excuseId);
 
@@ -70,8 +69,8 @@ export function PickView({ excuseId, revealed, answerOpen, onSelect, onDeselect,
               <motion.li
                 key={e.id}
                 initial={{ opacity: 0, y: 14 }}
-                animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
-                transition={{ duration: 0.5, ease: EASE_OUT, delay: revealed ? 0.15 + i * 0.07 : 0 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.15 + i * 0.07 }}
                 className={cn("relative flex w-full max-w-full justify-center desk:justify-start", STAGGER[i], on && "z-40", !on && "ea-dimmable")}
               >
                 <motion.button

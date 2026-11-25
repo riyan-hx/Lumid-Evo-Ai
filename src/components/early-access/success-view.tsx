@@ -53,25 +53,6 @@ function CountUp({ to, reduce }: { to: number; reduce: boolean }) {
   return <>{nf.format(reduce ? to : v)}</>;
 }
 
-/** A one-off burst of lime sparks from the orb. Decorative; skipped for reduced motion. */
-const SPARKS = Array.from({ length: 10 }, (_, i) => ({ a: (i / 10) * Math.PI * 2 + 0.3, d: 70 + (i % 3) * 26, s: 5 + (i % 3) * 2 }));
-function Sparks() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      {SPARKS.map((p, i) => (
-        <motion.span
-          key={i}
-          className="absolute rounded-full bg-lime shadow-[0_0_10px_rgba(136,217,95,0.9)]"
-          style={{ width: p.s, height: p.s }}
-          initial={{ x: 0, y: 0, opacity: 0, scale: 0.4 }}
-          animate={{ x: Math.cos(p.a) * p.d, y: Math.sin(p.a) * p.d, opacity: [0, 1, 0], scale: [0.4, 1, 0.6] }}
-          transition={{ duration: 1.4, ease: EASE_OUT, delay: 0.25 + i * 0.03 }}
-        />
-      ))}
-    </div>
-  );
-}
-
 /** Step C. Pending: “That was your first small step.” + confirm hint. Confirmed (email link): “You’re in, for real.” */
 export function SuccessView({ signup, email, confirmed, excuseId }: Props) {
   const reduce = !!useReducedMotion();
@@ -111,7 +92,6 @@ export function SuccessView({ signup, email, confirmed, excuseId }: Props) {
           <motion.div initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={reduce ? { duration: 0.2 } : { ...spring.gentle, delay: 0.1 }}>
             <Orb size={132} state="breathing" className="desk:!size-[112px]" />
           </motion.div>
-          {!reduce && <Sparks />}
         </div>
 
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE_OUT, delay: 0.3 }} className="mt-7 font-mono text-[11px] tracking-[0.16em] text-lime-deep uppercase">
