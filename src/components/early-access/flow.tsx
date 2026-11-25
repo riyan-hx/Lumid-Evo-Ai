@@ -18,14 +18,14 @@ import { PickView } from "./pick-view";
 const loadSuccess = () => import("./success-view").then((m) => m.SuccessView);
 const SuccessView = dynamic(loadSuccess);
 
-type HistoryState = { step: "a" | "b" | "c"; excuse?: ExcuseId };
+type HistoryState = { step: "a" | "c" };
 type View = "pick" | "success";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /**
  * The whole early-access page (handoff §1, light design). A pick a line → B Evo answers
- * (bottom sheet on phones, popover on desktop) → C. Steps are client state mirrored to history (`?step=`).
+ * (bottom sheet on phones, popover on desktop) → C. Only the success step is pushed to history (`?step=c`).
  * Pass `confirmed` on the email-link landing page to start on C with “You’re in, for real.”.
  */
 export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
@@ -42,6 +42,7 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const sheetEl = useRef<HTMLDivElement | null>(null);
+  const restoreY = useRef<number | null>(null);
 
   const choice = excuses.find((e) => e.id === excuse) ?? null;
   const sheetOpen = !desk && !!choice && !saved && view === "pick";
@@ -59,15 +60,15 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
     if (email) void loadSuccess();
   }, [email]);
 
-  // Browser Back / Forward between steps.
+  // Browser Back / Forward: only the success step lives in history (picking a line never touches it,
+  // so opening/closing the answer is pure client state — no navigation, no re-render of the route).
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
       const st = e.state as HistoryState | null;
       if (st?.step === "c" && signupRef.current) setView("success");
       else {
         setView("pick");
-        setSaved(false);
-        setExcuse(st?.step === "b" ? (st.excuse ?? null) : null);
+        setSaved(true); // keep the picked line attached to the email; don't reopen the sheet
         requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
       }
     };
@@ -78,6 +79,7 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
   // Phone sheet: scroll the page so the picked line sits just above it (smoothly), like the design.
   useEffect(() => {
     if (!sheetOpen) return;
+    if (restoreY.current === null) restoreY.current = window.scrollY;
     const id = requestAnimationFrame(() => {
       const bubble = document.querySelector<HTMLElement>('[aria-pressed="true"]');
       const sheet = sheetEl.current;
@@ -97,20 +99,24 @@ export function EarlyAccessFlow({ confirmed }: { confirmed?: Signup }) {
 
   const select = (id: ExcuseId) => {
     track("line_selected", { excuse_id: id, order: excuses.findIndex((e) => e.id === id) + 1 });
-    const st: HistoryState = { step: "b", excuse: id };
-    if (excuse) history.replaceState(st, "", url("b"));
-    else history.pushState(st, "", url("b"));
     setSaved(false);
     setExcuse(id);
   };
+
+  /** Close the answer. On phones, glide back to where the page was before the sheet scrolled it. */
   const deselect = useCallback(() => {
     setSaved(false);
-    if (history.state?.step === "b") history.back();
-    else setExcuse(null);
+    setExcuse(null);
+    if (restoreY.current !== null) {
+      const back = restoreY.current - window.scrollY;
+      restoreY.current = null;
+      requestAnimationFrame(() => scrollByAmount(back));
+    }
   }, []);
 
   /** “Save this step · join early access”: hand off to the email field. */
   const useStep = useCallback(() => {
+    restoreY.current = null;
     setSaved(true);
     setPulse((p) => p + 1);
     requestAnimationFrame(() =>

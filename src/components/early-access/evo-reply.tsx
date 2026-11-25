@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useDragControls, useReducedMotion } from "motion/react";
+import { motion, useDragControls, useIsPresent, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/icons";
 import { Orb } from "@/components/ui/orb";
@@ -99,6 +99,7 @@ export function EvoSheet({ choice, onClose, onUse, onAnother, sheetRef }: SheetP
   const reduce = useReducedMotion();
   const drag = useDragControls();
   const ref = useRef<HTMLDivElement | null>(null);
+  const present = useIsPresent(); // false while the sheet is animating out
 
   useEffect(() => {
     ref.current?.focus({ preventScroll: true });
@@ -109,7 +110,7 @@ export function EvoSheet({ choice, onClose, onUse, onAnother, sheetRef }: SheetP
 
   return (
     <>
-      <div className="fixed inset-0 z-40" onPointerDown={onClose} aria-hidden />
+      <div className="fixed inset-0 z-40" style={{ pointerEvents: present ? "auto" : "none" }} onPointerDown={onClose} aria-hidden />
       <motion.div
         ref={(el) => {
           ref.current = el;
@@ -130,7 +131,7 @@ export function EvoSheet({ choice, onClose, onUse, onAnother, sheetRef }: SheetP
         exit={reduce ? { opacity: 0 } : { y: "115%", transition: { duration: 0.28, ease: EASE_OUT } }}
         transition={reduce ? { duration: 0.2 } : spring.gentle}
         className="fixed inset-x-3 bottom-[max(12px,env(safe-area-inset-bottom))] z-50 mx-auto max-w-[480px] rounded-[30px] p-5 pt-3 text-white outline-none shadow-[0_-8px_40px_rgba(20,26,18,0.3)]"
-        style={{ background: CARD_BG, touchAction: "none" }}
+        style={{ background: CARD_BG, touchAction: "none", pointerEvents: present ? "auto" : "none" }}
       >
         <div className="mb-3 flex cursor-grab touch-none justify-center py-2 active:cursor-grabbing" onPointerDown={(e) => drag.start(e)} aria-hidden>
           <span className="h-1 w-9 rounded-full bg-white/25" />

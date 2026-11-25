@@ -140,13 +140,10 @@ html.ea-locked {
 }
 /* Phone sheet open: everything except the picked line recedes. */
 .ea-dimmable {
-  transition:
-    opacity 0.3s var(--ease-out-evo),
-    filter 0.3s var(--ease-out-evo);
+  transition: opacity 0.3s var(--ease-out-evo);
 }
 .ea-sheet-open .ea-dimmable {
-  opacity: 0.3;
-  filter: blur(2px);
+  opacity: 0.3; /* opacity only — blurring a full screen repaints every frame on phones */
 }
 html.lenis,
 html.lenis body {
